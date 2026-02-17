@@ -59,6 +59,7 @@ model Ticket {
   assignedToId String?
   assignedTo   User? @relation("AssignedTickets", fields: [assignedToId], references: [id])
   comments Comment[]
+  attachments Attachment[]
 }
 
 model Comment {
@@ -70,6 +71,18 @@ model Comment {
 
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  filePath  String
+  mimeType  String
+
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
 
   createdAt DateTime @default(now())
 }

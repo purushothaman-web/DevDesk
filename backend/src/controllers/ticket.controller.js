@@ -18,6 +18,21 @@ export const createTicketController = async (req, res) => {
       },
     });
 
+    if (req.files && req.files.length > 0) {
+      const attachments = await Promise.all(
+        req.files.map(file =>
+          prisma.attachment.create({
+            data: {
+              fileName: file.originalname,
+              filePath: file.path,
+              mimeType: file.mimetype,
+              ticketId: ticket.id,
+            },
+          })
+        )
+      );
+    }
+
     return res.status(201).json(ticket);
   } catch (error) {
     if (error.name === 'ZodError') {
