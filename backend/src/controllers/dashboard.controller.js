@@ -1,6 +1,6 @@
 import { prisma } from "../db/client.js";
 
-export const getDashboardStatsController = async(req, res) => {
+export const getDashboardStatsController = async(req, res, next) => {
     try {
         const total = await prisma.ticket.count();
         
@@ -63,7 +63,6 @@ export const getDashboardStatsController = async(req, res) => {
             assignedToMe
         })
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Something went wrong" });
+        return next(error);
     }
 }

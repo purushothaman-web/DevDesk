@@ -4,7 +4,7 @@ import { updateStatusSchema } from '../validators/status.schema.js';
 import { assignTicketSchema } from '../validators/assign.schema.js';
 import { commentSchema } from '../validators/comment.schema.js';
 
-export const createTicketController = async (req, res) => {
+export const createTicketController = async (req, res, next) => {
   try {
     const validatedData = createTicketSchema.parse(req.body);
     const { title, description, priority } = validatedData;
@@ -35,17 +35,12 @@ export const createTicketController = async (req, res) => {
 
     return res.status(201).json(ticket);
   } catch (error) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ errors: error.errors });
-    }
-
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 };
 
 
-export const getTicketsController = async (req, res) => {
+export const getTicketsController = async (req, res, next) => {
   try {
     const tickets = await prisma.ticket.findMany({
       where: { userId: req.user.id },
@@ -53,12 +48,11 @@ export const getTicketsController = async (req, res) => {
     })
     return res.status(200).json(tickets);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 }
 
-export const getAllTicketsController = async (req, res) => {
+export const getAllTicketsController = async (req, res, next) => {
   try {
     let { status, priority, assignedToId, page, limit } = req.query;
 
@@ -121,13 +115,12 @@ export const getAllTicketsController = async (req, res) => {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Something went wrong" });
+    return next(error);
   }
 };
 
 
-export const updateStatusController = async (req, res) => {
+export const updateStatusController = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = updateStatusSchema.parse(req.body);
@@ -140,20 +133,12 @@ export const updateStatusController = async (req, res) => {
     return res.json(ticket);
 
   } catch (error) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({ error: error.errors });
-    }
-
-    if (error.code === "P2025") {
-      return res.status(404).json({ error: "Ticket not found" });
-    }
-
-    return res.status(500).json({ error: "Something went wrong" });
+    return next(error);
   }
 };
 
 
-export const assignController = async (req, res) => {
+export const assignController = async (req, res, next) => {
   try {
     const validatedData = assignTicketSchema.parse(req.body);
     const { assignedToId: agentId } = validatedData;
@@ -198,16 +183,11 @@ export const assignController = async (req, res) => {
     return res.json(updatedTicket);
 
   } catch (error) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ errors: error.errors });
-    }
-
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 };
 
-export const addCommentController = async (req, res) => {
+export const addCommentController = async (req, res, next ) => {
   try {
     const { id: ticketId } = req.params;
     const { message } = commentSchema.parse(req.body);
@@ -244,16 +224,11 @@ export const addCommentController = async (req, res) => {
     return res.status(201).json(comment);
 
   } catch (error) {
-    if (error.name === 'ZodError') {
-      return res.status(400).json({ errors: error.errors });
-    }
-
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 };
 
-export const getTicketByIdController = async (req, res) => {
+export const getTicketByIdController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -280,8 +255,7 @@ export const getTicketByIdController = async (req, res) => {
     return res.json(ticket);
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 };
 
