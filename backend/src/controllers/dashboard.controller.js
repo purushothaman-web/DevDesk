@@ -1,4 +1,5 @@
 import { prisma } from "../db/client.js";
+import { ApiResponse } from "../utils/response.js";
 
 export const getDashboardStatsController = async(req, res, next) => {
     try {
@@ -51,7 +52,7 @@ export const getDashboardStatsController = async(req, res, next) => {
             })
         }
 
-        return res.json({
+        return ApiResponse.success(res, 200, "Dashboard stats fetched successfully", {
             total,
             open,
             inProgress,
@@ -61,7 +62,7 @@ export const getDashboardStatsController = async(req, res, next) => {
             mediumPriority,
             lowPriority,
             assignedToMe
-        })
+        });
     } catch (error) {
         return next(error);
     }

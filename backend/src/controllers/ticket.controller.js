@@ -3,6 +3,7 @@ import { createTicketSchema } from '../validators/ticket.schema.js';
 import { updateStatusSchema } from '../validators/status.schema.js';
 import { assignTicketSchema } from '../validators/assign.schema.js';
 import { commentSchema } from '../validators/comment.schema.js';
+import { ApiResponse } from "../utils/response.js";
 
 export const createTicketController = async (req, res, next) => {
   try {
@@ -33,7 +34,7 @@ export const createTicketController = async (req, res, next) => {
       );
     }
 
-    return res.status(201).json(ticket);
+    return ApiResponse.success(res, 201, "Ticket created successfully", ticket);
   } catch (error) {
     return next(error);
   }
@@ -46,7 +47,7 @@ export const getTicketsController = async (req, res, next) => {
       where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
     })
-    return res.status(200).json(tickets);
+    return ApiResponse.success(res, 200, "Tickets fetched successfully", tickets);
   } catch (error) {
     return next(error);
   }
@@ -107,11 +108,10 @@ export const getAllTicketsController = async (req, res, next) => {
 
     const total = await prisma.ticket.count({ where });
 
-    return res.status(200).json({
-      data: tickets,
-      page,
-      limit,
+    return ApiResponse.success(res, 200, "All tickets fetched successfully", {
+      tickets,
       total,
+      page,
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
@@ -130,7 +130,7 @@ export const updateStatusController = async (req, res, next) => {
       data: { status },
     });
 
-    return res.json(ticket);
+    return ApiResponse.success(res, 200, "Ticket status updated successfully", ticket);
 
   } catch (error) {
     return next(error);
@@ -161,7 +161,7 @@ export const assignController = async (req, res, next) => {
     }
 
     if (agent.role !== "AGENT") {
-      return res.status(400).json({ message: "User is not an agent" });
+      return ApiResponse.error(res, 400, "User is not an agent");
     }
 
     const updatedTicket = await prisma.ticket.update({
@@ -180,7 +180,7 @@ export const assignController = async (req, res, next) => {
       }
     });
 
-    return res.json(updatedTicket);
+    return ApiResponse.success(res, 200, "Ticket assigned successfully", updatedTicket);
 
   } catch (error) {
     return next(error);
@@ -221,7 +221,7 @@ export const addCommentController = async (req, res, next ) => {
       }
     });
 
-    return res.status(201).json(comment);
+    return ApiResponse.success(res, 201, "Comment added successfully", comment);
 
   } catch (error) {
     return next(error);
@@ -249,10 +249,10 @@ export const getTicketByIdController = async (req, res, next) => {
     });
 
     if (!ticket) {
-      return res.status(404).json({ message: "Ticket not found" });
+      return ApiResponse.error(res, 404, "Ticket not found");
     }
 
-    return res.json(ticket);
+    return ApiResponse.success(res, 200, "Ticket fetched successfully", ticket);
 
   } catch (error) {
     return next(error);
