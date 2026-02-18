@@ -2,6 +2,7 @@ import { loginSchema, registerSchema } from "../validators/auth.schema.js";
 import bcrypt from 'bcrypt';
 import { prisma } from "../db/client.js";
 import { generateToken } from "../utils/jwt.js";
+import { ApiResponse } from "../utils/response.js";
 
 export const registerController = async (req, res, next) => {
   try {
@@ -9,14 +10,14 @@ export const registerController = async (req, res, next) => {
     const { name, email, password } = validatedData;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) return res.status(409).json({ error: 'Email already in use' });
+    if (existingUser) return ApiResponse.error(res, 409, 'Email already in use');
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: { name, email, password: hashedPassword, role: 'USER' },
     });
 
-    return res.status(201).json({
+    return ApiResponse.success(res, 201, "User registered successfully", {
       id: user.id,
       name: user.name,
       email: user.email,
@@ -36,24 +37,24 @@ export const loginController = async (req, res, next) => {
 
     // Unified message for security
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return ApiResponse.error(res, 401, "Invalid credentials");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return ApiResponse.error(res, 401, "Invalid credentials");
     }
 
     // Create JWT
-const token = generateToken({
-  id: user.id,
-  email: user.email,
-  role: user.role
-});
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.role
+    });
 
 
-    return res.status(200).json({
+    return ApiResponse.success(res, 200, "Login successful", {
       token,
       user: {
         id: user.id,
@@ -72,14 +73,14 @@ export const profileController = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id }});
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return ApiResponse.error(res, 404, 'User not found');
     }
-    return res.status(200).json({
+    return ApiResponse.success(res, 200, "Profile fetched successfully", {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-    })
+    });
   } catch (error){
     return next(error);
   }
