@@ -4,6 +4,7 @@ import authRoutes from './src/routes/auth.route.js';
 import ticketRoutes from './src/routes/ticket.routes.js';
 import multer from 'multer';
 import dashboardRoutes from './src/routes/dashboard.route.js';
+import { errorMiddleware } from './src/middleware/error.middleware.js';
 dotenv.config();
 const app = express();
 
@@ -13,6 +14,7 @@ app.use('/auth', authRoutes);
 app.use('/tickets', ticketRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/dashboard", dashboardRoutes);
+app.use(errorMiddleware);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {

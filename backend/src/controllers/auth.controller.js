@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from "../db/client.js";
 import { generateToken } from "../utils/jwt.js";
 
-export const registerController = async (req, res) => {
+export const registerController = async (req, res, next) => {
   try {
     const validatedData = registerSchema.parse(req.body);
     const { name, email, password } = validatedData;
@@ -23,13 +23,11 @@ export const registerController = async (req, res) => {
       role: user.role,
     });
   } catch (error) {
-    if (error.name === 'ZodError') return res.status(400).json({ errors: error.errors });
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 };
 
-export const loginController = async (req, res) => {
+export const loginController = async (req, res, next) => {
   try {
     const validatedData = loginSchema.parse(req.body);
     const { email, password } = validatedData;
@@ -66,16 +64,11 @@ const token = generateToken({
     });
 
   } catch (error) {
-    if (error.name === "ZodError") {
-      return res.status(400).json({ errors: error.errors });
-    }
-
-    console.error(error);
-    return res.status(500).json({ error: "Something went wrong" });
+    return next(error);
   }
 };
 
-export const profileController = async (req, res) => {
+export const profileController = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id }});
     if (!user) {
@@ -88,6 +81,6 @@ export const profileController = async (req, res) => {
       role: user.role,
     })
   } catch (error){
-    return res.status(500).json({ error: 'Something went wrong' });
+    return next(error);
   }
 }
