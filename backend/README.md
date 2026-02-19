@@ -56,10 +56,13 @@ cp .env.example .env
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name                        |
 | `CLOUDINARY_API_KEY`    | Cloudinary API key                           |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret                        |
-| `EMAIL_HOST`        | SMTP host                                        |
-| `EMAIL_PORT`        | SMTP port                                        |
-| `EMAIL_USER`        | SMTP username                                    |
-| `EMAIL_PASS`        | SMTP password                                    |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                           |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                        |
+| `SMTP_HOST`         | SMTP host (e.g., smtp.mailtrap.io)               |
+| `SMTP_PORT`         | SMTP port (e.g., 587)                            |
+| `SMTP_USER`         | SMTP username                                    |
+| `SMTP_PASS`         | SMTP password                                    |
+| `FRONTEND_URL`      | URL of the frontend (for reset emails)           |
 
 ### 3. Run database migrations
 
@@ -146,7 +149,7 @@ The API is organized around three main resource groups:
 
 | Prefix        | Description                                      |
 |---------------|--------------------------------------------------|
-| `/auth`       | Registration, login, profile                     |
+| `/auth`       | Registration, login, profile, password reset     |
 | `/tickets`    | Ticket CRUD, status/assignment, comments         |
 | `/dashboard`  | Stats for admins and agents                      |
 
