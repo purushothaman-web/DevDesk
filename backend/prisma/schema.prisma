@@ -25,10 +25,13 @@ model User {
   password  String
   createdAt DateTime @default(now())
   role      Role     @default(USER)
+  resetToken String?
+  resetTokenExpiry DateTime?
 
-  tickets Ticket[]
-  assignedTickets Ticket[] @relation("AssignedTickets")
-  comments Comment[]
+  tickets         Ticket[]
+  assignedTickets Ticket[]     @relation("AssignedTickets")
+  comments        Comment[]
+  activityLogs    ActivityLog[]
 }
 
 enum Status {
@@ -56,10 +59,12 @@ model Ticket {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  dueDate     DateTime?
   assignedToId String?
   assignedTo   User? @relation("AssignedTickets", fields: [assignedToId], references: [id])
-  comments Comment[]
-  attachments Attachment[]
+  comments     Comment[]
+  attachments  Attachment[]
+  activityLogs ActivityLog[]
 
   isDeleted Boolean @default(false)
 }
@@ -86,5 +91,16 @@ model Attachment {
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
 
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  detail    String
   createdAt DateTime @default(now())
 }

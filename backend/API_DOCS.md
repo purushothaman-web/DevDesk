@@ -169,6 +169,83 @@ Get the authenticated user's profile.
 
 ---
 
+### `PATCH /auth/profile`
+
+Update the authenticated user's profile.
+
+**Access:** 🔒 Authenticated (any role)
+
+**Request Body**
+
+```json
+{
+  "name": "Jane Doe",
+  "password": "newsecurepassword123"
+}
+```
+
+| Field      | Type   | Required | Description                |
+|------------|--------|----------|----------------------------|
+| `name`     | string | ❌       | Update display name        |
+| `password` | string | ❌       | Update password (min 6 chars) |
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": { "id": "uuid", "name": "Jane Doe", "email": "..." }
+}
+```
+
+---
+
+### `POST /auth/forgot-password`
+
+Request a password reset link via email.
+
+**Access:** Public
+
+**Request Body**
+```json
+{ "email": "user@example.com" }
+```
+
+**Response `200 OK`**
+```json
+{
+  "success": true,
+  "message": "If an account with that email exists, a password reset link has been sent."
+}
+```
+
+---
+
+### `POST /auth/reset-password`
+
+Reset password using a token.
+
+**Access:** Public
+
+**Request Body**
+```json
+{
+  "token": "reset-token-from-email",
+  "password": "newpassword123"
+}
+```
+
+**Response `200 OK`**
+```json
+{
+  "success": true,
+  "message": "Password reset successfully. You can now login."
+}
+```
+
+---
+
 ## Tickets
 
 ### `POST /tickets`
@@ -256,6 +333,7 @@ Get all tickets (with filtering and pagination).
 | `status`       | string | Filter by status: `OPEN` \| `IN_PROGRESS` \| `RESOLVED` \| `CLOSED` |
 | `priority`     | string | Filter by priority: `LOW` \| `MEDIUM` \| `HIGH`     |
 | `assignedToId` | string | Filter by assigned agent UUID                        |
+| `search`       | string | Search by title or description (case-insensitive)    |
 | `page`         | number | Page number (default: `1`)                           |
 | `limit`        | number | Results per page (default: `10`, max: `50`)          |
 
