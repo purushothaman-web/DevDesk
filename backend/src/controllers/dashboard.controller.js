@@ -3,42 +3,53 @@ import { ApiResponse } from "../utils/response.js";
 
 export const getDashboardStatsController = async(req, res, next) => {
     try {
-        const total = await prisma.ticket.count();
+        const total = await prisma.ticket.count({
+            where:{
+                isDeleted: false
+            }
+        });
         
         const open = await prisma.ticket.count({
             where:{
-                status: "OPEN"
+                status: "OPEN",
+                isDeleted: false
             }
         })
         const inProgress = await prisma.ticket.count({
             where:{
-                status: "IN_PROGRESS"
+                status: "IN_PROGRESS",
+                isDeleted: false
             }
         })
         const resolved = await prisma.ticket.count({
             where:{
-                status: "RESOLVED"
+                status: "RESOLVED",
+                isDeleted: false
             }
         })
         const closed = await prisma.ticket.count({
             where:{
-                status: "CLOSED"
+                status: "CLOSED",
+                isDeleted: false
             }
         })
 
         const highPriority = await prisma.ticket.count({
             where:{
-                priority: "HIGH"
+                priority: "HIGH",
+                isDeleted: false
             }
         })
         const mediumPriority = await prisma.ticket.count({
             where:{
-                priority: "MEDIUM"
+                priority: "MEDIUM",
+                isDeleted: false
             }
         })
         const lowPriority = await prisma.ticket.count({
             where:{
-                priority: "LOW"
+                priority: "LOW",
+                isDeleted: false
             }
         })
 
@@ -47,7 +58,8 @@ export const getDashboardStatsController = async(req, res, next) => {
         if(req.user.role === "AGENT"){
             assignedToMe = await prisma.ticket.count({
                 where:{
-                    assignedToId: req.user.id
+                    assignedToId: req.user.id,
+                    isDeleted: false
                 }
             })
         }

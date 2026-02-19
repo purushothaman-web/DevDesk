@@ -4,6 +4,7 @@ import { updateStatusSchema } from '../validators/status.schema.js';
 import { assignTicketSchema } from '../validators/assign.schema.js';
 import { commentSchema } from '../validators/comment.schema.js';
 import { ApiResponse } from "../utils/response.js";
+import { sendAssignmentMail, sendAgentAssignmentMail, sendStatusChangeEmail } from '../services/mail.service.js';
 
 export const createTicketController = async (req, res, next) => {
   try {
@@ -44,7 +45,7 @@ export const createTicketController = async (req, res, next) => {
 export const getTicketsController = async (req, res, next) => {
   try {
     const tickets = await prisma.ticket.findMany({
-      where: { userId: req.user.id },
+      where: { userId: req.user.id, isDeleted: false },
       orderBy: { createdAt: 'desc' },
     })
     return ApiResponse.success(res, 200, "Tickets fetched successfully", tickets);
@@ -66,7 +67,7 @@ export const getAllTicketsController = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
-    const where = {};
+    const where = { isDeleted: false };
 
     const allowedStatuses = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
     if (status) {
@@ -126,9 +127,15 @@ export const updateStatusController = async (req, res, next) => {
     const { status } = updateStatusSchema.parse(req.body);
 
     const ticket = await prisma.ticket.update({
-      where: { id },
+      where: { id, isDeleted: false },
       data: { status },
+      include: {
+        user: { select: { email: true, name: true } },
+      },
     });
+
+    // Fire-and-forget email notification
+    sendStatusChangeEmail(ticket.user.email, ticket.user.name, ticket.title, status);
 
     return ApiResponse.success(res, 200, "Ticket status updated successfully", ticket);
 
@@ -144,8 +151,8 @@ export const assignController = async (req, res, next) => {
     const { assignedToId: agentId } = validatedData;
     const { id } = req.params;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id }
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, isDeleted: false }
     });
 
     if (!ticket) {
@@ -165,9 +172,10 @@ export const assignController = async (req, res, next) => {
     }
 
     const updatedTicket = await prisma.ticket.update({
-      where: { id },
+      where: { id, isDeleted: false },
       data: { assignedToId: agentId },
       include: {
+        user: { select: { email: true, name: true } },
         assignedTo: {
           select: {
             id: true,
@@ -179,6 +187,13 @@ export const assignController = async (req, res, next) => {
         }
       }
     });
+
+    // Fire-and-forget: notify ticket owner, then agent (1s delay to respect Mailtrap rate limit)
+    (async () => {
+      await sendAssignmentMail(updatedTicket.user.email, updatedTicket.user.name, updatedTicket.title, agent.name);
+      await new Promise(r => setTimeout(r, 1000));
+      await sendAgentAssignmentMail(agent.email, agent.name, updatedTicket.title, updatedTicket.id, updatedTicket.priority);
+    })();
 
     return ApiResponse.success(res, 200, "Ticket assigned successfully", updatedTicket);
 
@@ -192,8 +207,8 @@ export const addCommentController = async (req, res, next ) => {
     const { id: ticketId } = req.params;
     const { message } = commentSchema.parse(req.body);
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId }
+    const ticket = await prisma.ticket.findFirst({
+      where: { id: ticketId, isDeleted: false }
     });
 
     if (!ticket) {
@@ -232,8 +247,8 @@ export const getTicketByIdController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id },
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, isDeleted: false },
       include: {
         user: { select: { id: true, name: true, role: true } },
         assignedTo: { select: { id: true, name: true, role: true } },
@@ -259,3 +274,31 @@ export const getTicketByIdController = async (req, res, next) => {
   }
 };
 
+
+export const deleteTicketController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, isDeleted: false }
+    });
+
+    if (!ticket) {
+      return ApiResponse.error(res, 404, "Ticket not found");
+    }
+
+    if (req.user.role !== "ADMIN" && ticket.userId !== req.user.id) {
+      return ApiResponse.error(res, 403, "Forbidden");
+    }
+
+    const deletedTicket = await prisma.ticket.update({
+      where: { id },
+      data: { isDeleted: true }
+    });
+
+    return ApiResponse.success(res, 200, "Ticket deleted successfully", deletedTicket);
+
+  } catch (error) {
+    return next(error);
+  }
+}

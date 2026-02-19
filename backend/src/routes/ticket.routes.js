@@ -1,5 +1,5 @@
 import express from 'express';
-import { createTicketController, getTicketsController, getAllTicketsController, updateStatusController, assignController, addCommentController, getTicketByIdController } from '../controllers/ticket.controller.js';
+import { createTicketController, getTicketsController, getAllTicketsController, updateStatusController, assignController, addCommentController, getTicketByIdController, deleteTicketController } from '../controllers/ticket.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { roleMiddleware } from '../middleware/role.middleware.js';
 import { upload } from '../middleware/upload.middleware.js';
@@ -13,5 +13,6 @@ router.patch('/:id/status', authMiddleware, roleMiddleware(['ADMIN', 'AGENT']), 
 router.patch('/:id/assign', authMiddleware, roleMiddleware(['ADMIN']), assignController);
 router.post('/:id/comments', authMiddleware, addCommentController);
 router.get('/:id', authMiddleware, getTicketByIdController);
+router.delete('/:id', authMiddleware, roleMiddleware(['ADMIN', 'USER']), deleteTicketController);
 
 export default router;

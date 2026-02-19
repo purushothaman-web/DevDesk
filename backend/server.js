@@ -5,11 +5,14 @@ import ticketRoutes from './src/routes/ticket.routes.js';
 import multer from 'multer';
 import dashboardRoutes from './src/routes/dashboard.route.js';
 import { errorMiddleware } from './src/middleware/error.middleware.js';
+import { globalRateLimit } from './src/middleware/ratelimit.middleware.js';
+import morgan from 'morgan';
 dotenv.config();
 const app = express();
 
 app.use(express.json());
-
+app.use(morgan("dev"));
+app.use(globalRateLimit);
 app.use('/auth', authRoutes);
 app.use('/tickets', ticketRoutes);
 app.use("/uploads", express.static("uploads"));
