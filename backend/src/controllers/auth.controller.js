@@ -1,8 +1,10 @@
 import { loginSchema, registerSchema } from "../validators/auth.schema.js";
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { prisma } from "../db/client.js";
 import { generateToken } from "../utils/jwt.js";
 import { ApiResponse } from "../utils/response.js";
+import { sendResetPasswordEmail } from "../services/mail.service.js";
 
 export const registerController = async (req, res, next) => {
   try {
@@ -17,11 +19,20 @@ export const registerController = async (req, res, next) => {
       data: { name, email, password: hashedPassword, role: 'USER' },
     });
 
-    return ApiResponse.success(res, 201, "User registered successfully", {
+    const token = generateToken({
       id: user.id,
-      name: user.name,
       email: user.email,
       role: user.role,
+    });
+
+    return ApiResponse.success(res, 201, "User registered successfully", {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     return next(error);
@@ -81,7 +92,154 @@ export const profileController = async (req, res, next) => {
       email: user.email,
       role: user.role,
     });
-  } catch (error){
+  } catch (error) {
     return next(error);
   }
-}
+};
+
+export const getAgentsController = async (req, res, next) => {
+
+  try {
+    const agents = await prisma.user.findMany({
+      where: { role: "AGENT" },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    });
+    return ApiResponse.success(res, 200, "Agents fetched successfully", agents);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getUsersController = async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return ApiResponse.success(res, 200, "Users fetched successfully", users);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateUserRoleController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    const VALID_ROLES = ["USER", "AGENT", "ADMIN"];
+    if (!role || !VALID_ROLES.includes(role)) {
+      return ApiResponse.error(res, 400, `Role must be one of: ${VALID_ROLES.join(", ")}`);
+    }
+
+    // Prevent admin from changing their own role
+    if (id === req.user.id) {
+      return ApiResponse.error(res, 400, "You cannot change your own role");
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return ApiResponse.error(res, 404, "User not found");
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    return ApiResponse.success(res, 200, "User role updated successfully", updated);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateProfileController = async (req, res, next) => {
+  try {
+    const { name, password } = req.body;
+    const userId = req.user.id;
+
+    const data = {};
+    if (name) data.name = name;
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    if (Object.keys(data).length === 0) {
+      return ApiResponse.error(res, 400, "No changes provided");
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    return ApiResponse.success(res, 200, "Profile updated successfully", updatedUser);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const forgotPasswordController = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return ApiResponse.error(res, 400, "Email is required");
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Return success even if user not found to prevent enumeration
+      return ApiResponse.success(res, 200, "If an account with that email exists, a password reset link has been sent.");
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: resetTokenHash, resetTokenExpiry },
+    });
+
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    
+    // Send email asynchronously
+    sendResetPasswordEmail(email, resetLink).catch(err => console.error("Email send failed", err));
+
+    return ApiResponse.success(res, 200, "If an account with that email exists, a password reset link has been sent.");
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const resetPasswordController = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return ApiResponse.error(res, 400, "Token and password are required");
+
+    const resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: resetTokenHash,
+        resetTokenExpiry: { gt: new Date() },
+      },
+    });
+
+    if (!user) return ApiResponse.error(res, 400, "Invalid or expired token");
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    return ApiResponse.success(res, 200, "Password reset successfully. You can now login.");
+  } catch (error) {
+    return next(error);
+  }
+};

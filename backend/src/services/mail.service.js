@@ -159,3 +159,25 @@ export const sendStatusChangeEmail = async (to, userName, ticketTitle, newStatus
         console.error("Failed to send status change mail:", error);
     }
 };
+
+// Sends password reset link
+export const sendResetPasswordEmail = async (to, resetLink) => {
+    const subject = `DevDesk: Password Reset Request`;
+    const html = baseTemplate(`
+      <p>Hi there,</p>
+      <p>We received a request to reset your password for your DevDesk account.</p>
+      <p>Click the button below to reset it:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px;">Reset Password</a>
+      </div>
+      <p>If you didn't request this, please ignore this email.</p>
+      <p>Thanks,<br/><strong>DevDesk Support Team</strong></p>
+    `);
+
+    try {
+        await sendMail(to, subject, html);
+        console.log("Reset password mail sent successfully");
+    } catch (error) {
+        console.error("Failed to send reset password mail:", error);
+    }
+};
