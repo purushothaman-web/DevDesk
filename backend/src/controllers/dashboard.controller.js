@@ -79,3 +79,28 @@ export const getDashboardStatsController = async(req, res, next) => {
         return next(error);
     }
 }
+
+export const getWorkloadController = async (req, res, next) => {
+    try {
+        const agents = await prisma.user.findMany({
+            where: { role: "AGENT" },
+            select: { id: true, name: true, email: true },
+            orderBy: { name: "asc" },
+        });
+
+        const workload = await Promise.all(
+            agents.map(async (agent) => {
+                const [open, inProgress, total] = await Promise.all([
+                    prisma.ticket.count({ where: { assignedToId: agent.id, status: "OPEN", isDeleted: false } }),
+                    prisma.ticket.count({ where: { assignedToId: agent.id, status: "IN_PROGRESS", isDeleted: false } }),
+                    prisma.ticket.count({ where: { assignedToId: agent.id, isDeleted: false } }),
+                ]);
+                return { ...agent, open, inProgress, total };
+            })
+        );
+
+        return ApiResponse.success(res, 200, "Workload fetched successfully", workload);
+    } catch (error) {
+        return next(error);
+    }
+}
