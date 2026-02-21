@@ -1,16 +1,88 @@
-# React + Vite
+# DevDesk Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend application for **DevDesk**, a modern help desk ticketing system. Built with React, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Authentication**: Login, Registration, Password Reset, Profile Management.
+- **Dashboard**: Interactive charts and statistics for Admins and Agents.
+- **Ticket Management**: Create, view, update, delete tickets.
+- **Search**: Full-text search for tickets.
+- **Attachments**: Upload and preview images/PDFs.
+- **Comments**: Real-time discussions on tickets.
+- **Role-Based Access**: Specialized views for Users, Agents, and Admins.
+- **Responsive Design**: Fully responsive UI powered by Tailwind CSS.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS 4
+- **State/Data Fetching**: React Query (TanStack Query), Context API
+- **Routing**: React Router DOM 7
+- **HTTP Client**: Axios
+- **Notifications**: React Hot Toast
+- **Chart Library**: Recharts
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Node.js >= 18
+- NPM or Yarn
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone <repo-url>
+cd frontend
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env` file in the `frontend` directory:
+
+```bash
+VITE_BASE_URL="http://localhost:5000/api"
+```
+
+> Ensure this points to your running backend API.
+
+### 4. Run the development server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+## Scripts
+
+- `npm run dev`: Start development server.
+- `npm run build`: Build for production.
+- `npm run preview`: Preview production build locally.
+- `npm run lint`: Run ESLint.
+
+## Project Structure
+
+```
+frontend/
+├── public/              # Static assets
+├── src/
+│   ├── api/             # API client and service functions
+│   ├── components/      # Reusable UI components
+│   ├── context/         # React Context (Auth)
+│   ├── pages/           # Application pages (Login, Dashboard, etc.)
+│   ├── App.jsx          # Main application component with routes
+│   └── main.jsx         # Entry point
+├── index.html
+├── package.json
+├── vite.config.js
+└── tailwind.config.js   # (If applicable, or v4 CSS config)
+```
