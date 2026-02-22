@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import pkg from '@prisma/client';
+const { Prisma } = pkg;
 import { CustomError } from "../utils/error.js";
 import { ApiResponse } from "../utils/response.js";
 
