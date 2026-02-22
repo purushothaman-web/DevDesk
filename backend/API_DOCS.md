@@ -42,6 +42,9 @@ All responses follow a standardized format:
   - [Delete Ticket](#delete-ticketsid)
 - [Dashboard](#dashboard)
   - [Get Dashboard Stats](#get-dashboardstats)
+- [Organizations](#organizations)
+  - [Get All Organizations](#get-organizations)
+  - [Delete Organization](#delete-organizationsid)
 
 ---
 
@@ -60,15 +63,17 @@ Register a new user account.
 {
   "name": "John Doe",
   "email": "john@example.com",
-  "password": "securepassword123"
+  "password": "securepassword123",
+  "organizationName": "Acme Corp"
 }
 ```
 
-| Field      | Type   | Required | Constraints         |
-|------------|--------|----------|---------------------|
-| `name`     | string | ✅       | Non-empty           |
-| `email`    | string | ✅       | Valid email format  |
-| `password` | string | ✅       | Min 6 characters    |
+| Field              | Type   | Required | Constraints         |
+|--------------------|--------|----------|---------------------|
+| `name`             | string | ✅       | Non-empty           |
+| `email`            | string | ✅       | Valid email format  |
+| `password`         | string | ✅       | Min 6 characters    |
+| `organizationName` | string | ✅       | Unique tenant name  |
 
 **Response `201 Created`**
 
@@ -80,7 +85,9 @@ Register a new user account.
     "id": "uuid",
     "name": "John Doe",
     "email": "john@example.com",
-    "role": "USER"
+    "role": "ADMIN",
+    "organizationId": "uuid",
+    "organizationName": "Acme Corp"
   }
 }
 ```
@@ -123,7 +130,8 @@ Authenticate a user and get a JWT token.
       "id": "uuid",
       "name": "John Doe",
       "email": "john@example.com",
-      "role": "USER"
+      "role": "USER",
+      "organizationId": "uuid"
     }
   }
 }
@@ -155,7 +163,8 @@ Get the authenticated user's profile.
     "id": "uuid",
     "name": "John Doe",
     "email": "john@example.com",
-    "role": "USER"
+    "role": "USER",
+    "organizationId": "uuid"
   }
 }
 ```
@@ -662,17 +671,79 @@ Get aggregate ticket statistics for the dashboard.
 
 ---
 
+## Organizations
+
+### `GET /organizations`
+
+Get a list of all tenant organizations and their aggregate limits.
+
+**Access:** 🔒 `SUPER_ADMIN` only
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "message": "Organizations fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Acme Corp",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "_count": {
+        "users": 5,
+        "tickets": 12
+      }
+    }
+  ]
+}
+```
+
+---
+
+### `DELETE /organizations/:id`
+
+Delete a tenant organization. Cannot delete if the organization has linked users or tickets.
+
+**Access:** 🔒 `SUPER_ADMIN` only
+
+**Path Parameters**
+
+| Parameter | Type   | Description |
+|-----------|--------|-------------|
+| `id`      | string | Org UUID    |
+
+**Response `200 OK`**
+
+```json
+{
+  "success": true,
+  "message": "Organization deleted successfully"
+}
+```
+
+---
+
 ## Data Models
+
+### Organization
+
+| Field       | Type     | Description                            |
+|-------------|----------|----------------------------------------|
+| `id`        | UUID     | Unique identifier                      |
+| `name`      | string   | Unique tenant name                     |
+| `createdAt` | datetime | Tenant creation timestamp              |
 
 ### User
 
 | Field       | Type     | Description                            |
 |-------------|----------|----------------------------------------|
-| `id`        | UUID     | Unique identifier                      |
-| `name`      | string   | Display name                           |
-| `email`     | string   | Unique email address                   |
-| `role`      | enum     | `USER` \| `AGENT` \| `ADMIN`           |
-| `createdAt` | datetime | Account creation timestamp             |
+| `id`             | UUID     | Unique identifier                      |
+| `name`           | string   | Display name                           |
+| `email`          | string   | Unique email address                   |
+| `role`           | enum     | `USER` \| `AGENT` \| `ADMIN` \| `SUPER_ADMIN` |
+| `organizationId` | UUID     | Associated Tenant                      |
+| `createdAt`      | datetime | Account creation timestamp             |
 
 ### Ticket
 
@@ -685,6 +756,7 @@ Get aggregate ticket statistics for the dashboard.
 | `priority`     | enum     | `LOW` \| `MEDIUM` \| `HIGH`                        |
 | `userId`       | UUID     | Ticket creator (User)                              |
 | `assignedToId` | UUID?    | Assigned agent (nullable)                          |
+| `organizationId`| UUID    | Associated Tenant                                  |
 | `isDeleted`    | boolean  | Soft delete flag                                   |
 | `createdAt`    | datetime | Creation timestamp                                 |
 | `updatedAt`    | datetime | Last update timestamp                              |

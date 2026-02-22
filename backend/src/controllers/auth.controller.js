@@ -1,4 +1,4 @@
-import { loginSchema, registerSchema } from "../validators/auth.schema.js";
+import { loginSchema, registerSchema, createUserSchema } from "../validators/auth.schema.js";
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { prisma } from "../db/client.js";
@@ -9,20 +9,41 @@ import { sendResetPasswordEmail } from "../services/mail.service.js";
 export const registerController = async (req, res, next) => {
   try {
     const validatedData = registerSchema.parse(req.body);
-    const { name, email, password } = validatedData;
+    const { name, email, password, organizationName } = validatedData;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) return ApiResponse.error(res, 409, 'Email already in use');
 
+    const existingOrg = await prisma.organization.findUnique({ where: { name: organizationName } });
+    if (existingOrg) return ApiResponse.error(res, 409, 'Organization name already exists');
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role: 'USER' },
+    
+    // Create Organization and the Admin User together
+    const organization = await prisma.organization.create({
+      data: {
+        name: organizationName,
+        users: {
+          create: {
+            name,
+            email,
+            password: hashedPassword,
+            role: 'ADMIN',
+          }
+        }
+      },
+      include: {
+        users: true // To get the created user
+      }
     });
+
+    const user = organization.users[0];
 
     const token = generateToken({
       id: user.id,
       email: user.email,
       role: user.role,
+      organizationId: organization.id,
     });
 
     return ApiResponse.success(res, 201, "User registered successfully", {
@@ -32,6 +53,8 @@ export const registerController = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        organizationId: organization.id,
+        organizationName: organization.name
       },
     });
   } catch (error) {
@@ -61,7 +84,8 @@ export const loginController = async (req, res, next) => {
     const token = generateToken({
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
+      organizationId: user.organizationId
     });
 
 
@@ -72,6 +96,7 @@ export const loginController = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        organizationId: user.organizationId
       },
     });
 
@@ -91,6 +116,7 @@ export const profileController = async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId
     });
   } catch (error) {
     return next(error);
@@ -100,9 +126,19 @@ export const profileController = async (req, res, next) => {
 export const getAgentsController = async (req, res, next) => {
 
   try {
+    const whereClause = { role: "AGENT" };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
     const agents = await prisma.user.findMany({
-      where: { role: "AGENT" },
-      select: { id: true, name: true, email: true },
+      where: whereClause,
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        organization: { select: { name: true } } 
+      },
       orderBy: { name: "asc" },
     });
     return ApiResponse.success(res, 200, "Agents fetched successfully", agents);
@@ -113,11 +149,63 @@ export const getAgentsController = async (req, res, next) => {
 
 export const getUsersController = async (req, res, next) => {
   try {
+    const whereClause = {};
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
     const users = await prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      where: whereClause,
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        role: true, 
+        createdAt: true,
+        organization: { select: { name: true } }
+      },
       orderBy: { createdAt: "desc" },
     });
     return ApiResponse.success(res, 200, "Users fetched successfully", users);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const createUserController = async (req, res, next) => {
+  try {
+    // Only ADMIN or SUPER_ADMIN can create users directly
+    if (req.user.role === 'USER' || req.user.role === 'AGENT') {
+      return ApiResponse.error(res, 403, "Forbidden: Only Admins can create users");
+    }
+
+    const validatedData = createUserSchema.parse(req.body);
+    const { name, email, password, role } = validatedData;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) return ApiResponse.error(res, 409, 'Email already in use');
+
+    // Super Admins could potentially specify an organizationId, but for now we'll 
+    // assign to the requester's organization.
+    const organizationId = req.user.organizationId;
+
+    if (!organizationId) {
+      return ApiResponse.error(res, 400, "Cannot create user: Admin does not belong to an organization");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { 
+        name, 
+        email, 
+        password: hashedPassword, 
+        role,
+        organizationId 
+      },
+      select: { id: true, name: true, email: true, role: true, organizationId: true }
+    });
+
+    return ApiResponse.success(res, 201, "User created successfully", user);
   } catch (error) {
     return next(error);
   }
@@ -140,6 +228,10 @@ export const updateUserRoleController = async (req, res, next) => {
 
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return ApiResponse.error(res, 404, "User not found");
+
+    if (req.user.role !== "SUPER_ADMIN" && user.organizationId !== req.user.organizationId) {
+      return ApiResponse.error(res, 403, "Forbidden: User belongs to another organization");
+    }
 
     const updated = await prisma.user.update({
       where: { id },

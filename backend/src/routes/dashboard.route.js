@@ -5,7 +5,7 @@ import { getDashboardStatsController, getWorkloadController } from "../controlle
 
 const router = express.Router();
 
-router.get("/stats", authMiddleware, roleMiddleware(["ADMIN", "AGENT"]), getDashboardStatsController);
-router.get("/workload", authMiddleware, roleMiddleware(["ADMIN"]), getWorkloadController);
+router.get("/stats", authMiddleware, roleMiddleware(["ADMIN", "AGENT", "SUPER_ADMIN"]), getDashboardStatsController);
+router.get("/workload", authMiddleware, roleMiddleware(["ADMIN", "SUPER_ADMIN"]), getWorkloadController);
 
 export default router;

@@ -5,9 +5,12 @@ import authRoutes from './src/routes/auth.route.js';
 import ticketRoutes from './src/routes/ticket.routes.js';
 import multer from 'multer';
 import dashboardRoutes from './src/routes/dashboard.route.js';
+import organizationRoutes from './src/routes/organization.route.js';
 import { errorMiddleware } from './src/middleware/error.middleware.js';
 import { globalRateLimit } from './src/middleware/ratelimit.middleware.js';
 import morgan from 'morgan';
+import { seedSuperAdmin } from './src/utils/seed.js';
+
 dotenv.config();
 const app = express();
 
@@ -22,6 +25,7 @@ app.use('/auth', authRoutes);
 app.use('/tickets', ticketRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/dashboard", dashboardRoutes);
+app.use("/organizations", organizationRoutes);
 app.use(errorMiddleware);
 
 app.use((err, req, res, next) => {
@@ -37,7 +41,8 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  await seedSuperAdmin();
 });
 

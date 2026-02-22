@@ -3,53 +3,56 @@ import { ApiResponse } from "../utils/response.js";
 
 export const getDashboardStatsController = async(req, res, next) => {
     try {
+        const baseWhere = { isDeleted: false };
+        if (req.user.role !== "SUPER_ADMIN") {
+            baseWhere.organizationId = req.user.organizationId;
+        }
+
         const total = await prisma.ticket.count({
-            where:{
-                isDeleted: false
-            }
+            where: baseWhere
         });
         
         const open = await prisma.ticket.count({
             where:{
-                status: "OPEN",
-                isDeleted: false
+                ...baseWhere,
+                status: "OPEN"
             }
         })
         const inProgress = await prisma.ticket.count({
             where:{
-                status: "IN_PROGRESS",
-                isDeleted: false
+                ...baseWhere,
+                status: "IN_PROGRESS"
             }
         })
         const resolved = await prisma.ticket.count({
             where:{
-                status: "RESOLVED",
-                isDeleted: false
+                ...baseWhere,
+                status: "RESOLVED"
             }
         })
         const closed = await prisma.ticket.count({
             where:{
-                status: "CLOSED",
-                isDeleted: false
+                ...baseWhere,
+                status: "CLOSED"
             }
         })
 
         const highPriority = await prisma.ticket.count({
             where:{
-                priority: "HIGH",
-                isDeleted: false
+                ...baseWhere,
+                priority: "HIGH"
             }
         })
         const mediumPriority = await prisma.ticket.count({
             where:{
-                priority: "MEDIUM",
-                isDeleted: false
+                ...baseWhere,
+                priority: "MEDIUM"
             }
         })
         const lowPriority = await prisma.ticket.count({
             where:{
-                priority: "LOW",
-                isDeleted: false
+                ...baseWhere,
+                priority: "LOW"
             }
         })
 
@@ -58,8 +61,8 @@ export const getDashboardStatsController = async(req, res, next) => {
         if(req.user.role === "AGENT"){
             assignedToMe = await prisma.ticket.count({
                 where:{
-                    assignedToId: req.user.id,
-                    isDeleted: false
+                    ...baseWhere,
+                    assignedToId: req.user.id
                 }
             })
         }
@@ -82,8 +85,13 @@ export const getDashboardStatsController = async(req, res, next) => {
 
 export const getWorkloadController = async (req, res, next) => {
     try {
+        const agentWhere = { role: "AGENT" };
+        if (req.user.role !== "SUPER_ADMIN") {
+            agentWhere.organizationId = req.user.organizationId;
+        }
+
         const agents = await prisma.user.findMany({
-            where: { role: "AGENT" },
+            where: agentWhere,
             select: { id: true, name: true, email: true },
             orderBy: { name: "asc" },
         });

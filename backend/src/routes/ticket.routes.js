@@ -8,13 +8,13 @@ const router = express.Router();
 
 router.post('/', authMiddleware, upload.array('attachments', 5), createTicketController);
 router.get('/my', authMiddleware, getTicketsController);
-router.get('/', authMiddleware, roleMiddleware(['ADMIN', 'AGENT']), getAllTicketsController);
-router.patch('/:id/status', authMiddleware, roleMiddleware(['ADMIN', 'AGENT']), updateStatusController);
-router.patch('/:id/priority', authMiddleware, roleMiddleware(['ADMIN', 'AGENT']), updatePriorityController);
-router.patch('/:id/assign', authMiddleware, roleMiddleware(['ADMIN']), assignController);
-router.patch('/:id/due-date', authMiddleware, roleMiddleware(['ADMIN']), updateDueDateController);
+router.get('/', authMiddleware, roleMiddleware(['ADMIN', 'AGENT', 'SUPER_ADMIN']), getAllTicketsController);
+router.patch('/:id/status', authMiddleware, roleMiddleware(['ADMIN', 'AGENT', 'SUPER_ADMIN']), updateStatusController);
+router.patch('/:id/priority', authMiddleware, roleMiddleware(['ADMIN', 'AGENT', 'SUPER_ADMIN']), updatePriorityController);
+router.patch('/:id/assign', authMiddleware, roleMiddleware(['ADMIN', 'SUPER_ADMIN']), assignController);
+router.patch('/:id/due-date', authMiddleware, roleMiddleware(['ADMIN', 'SUPER_ADMIN']), updateDueDateController);
 router.post('/:id/comments', authMiddleware, addCommentController);
-router.get('/:id/activity', authMiddleware, roleMiddleware(['ADMIN', 'AGENT']), getActivityLogController);
+router.get('/:id/activity', authMiddleware, roleMiddleware(['ADMIN', 'AGENT', 'SUPER_ADMIN']), getActivityLogController);
 router.get('/:id', authMiddleware, getTicketByIdController);
 router.delete('/:id', authMiddleware, deleteTicketController);
 

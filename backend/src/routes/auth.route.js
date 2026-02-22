@@ -13,10 +13,11 @@ router.post('/register', registerRateLimit, registerController);
 router.post('/login', loginRateLimit, loginController);
 router.post('/forgot-password', forgotPasswordController);
 router.post('/reset-password', resetPasswordController);
+
 router.get('/me', authMiddleware, profileController);
 router.patch('/profile', authMiddleware, validate(updateProfileSchema), updateProfileController);
-router.get('/agents', authMiddleware, roleMiddleware(["ADMIN"]), getAgentsController);
-router.get('/users', authMiddleware, roleMiddleware(["ADMIN"]), getUsersController);
-router.patch('/users/:id/role', authMiddleware, roleMiddleware(["ADMIN"]), updateUserRoleController);
+router.get('/agents', authMiddleware, roleMiddleware(["ADMIN", "SUPER_ADMIN"]), getAgentsController);
+router.get('/users', authMiddleware, roleMiddleware(["ADMIN", "SUPER_ADMIN"]), getUsersController);
+router.patch('/users/:id/role', authMiddleware, roleMiddleware(["ADMIN", "SUPER_ADMIN"]), updateUserRoleController);
 
 export default router;

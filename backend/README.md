@@ -63,6 +63,8 @@ cp .env.example .env
 | `SMTP_USER`         | SMTP username                                    |
 | `SMTP_PASS`         | SMTP password                                    |
 | `FRONTEND_URL`      | URL of the frontend (for reset emails)           |
+| `SUPER_ADMIN_EMAIL` | Automatic Super Admin seeder email               |
+| `SUPER_ADMIN_PASSWORD` | Automatic Super Admin seeder password         |
 
 ### 3. Run database migrations
 
@@ -149,9 +151,12 @@ The API is organized around three main resource groups:
 
 | Prefix        | Description                                      |
 |---------------|--------------------------------------------------|
-| `/auth`       | Registration, login, profile, password reset     |
-| `/tickets`    | Ticket CRUD, status/assignment, comments         |
-| `/dashboard`  | Stats for admins and agents                      |
+| Prefix          | Description                                      |
+|-----------------|--------------------------------------------------|
+| `/auth`         | Registration, login, profile, password reset, agent/user management |
+| `/tickets`      | Ticket CRUD, status/assignment, comments         |
+| `/dashboard`    | Stats for admins and agents                      |
+| `/organizations`| Global tenant management (Super Admin only)      |
 
 For full request/response details, see [`API_DOCS.md`](./API_DOCS.md).
 
@@ -171,11 +176,12 @@ Authorization: Bearer <your_token>
 
 ## User Roles
 
-| Role    | Permissions                                                |
-|---------|------------------------------------------------------------|
-| `USER`  | Create tickets, view own tickets, add comments             |
-| `AGENT` | View all tickets, update ticket status, add comments       |
-| `ADMIN` | Full access — assign tickets, delete any ticket, dashboard |
+| Role          | Permissions                                                |
+|---------------|------------------------------------------------------------|
+| `USER`        | Create tickets, view own tickets, add comments             |
+| `AGENT`       | View all tickets, update ticket status, add comments       |
+| `ADMIN`       | Full access — assign tickets, delete any ticket, dashboard, add tenant users |
+| `SUPER_ADMIN` | Global Access — view all tenants, view global statistics, bypass tenant boundaries |
 
 ---
 

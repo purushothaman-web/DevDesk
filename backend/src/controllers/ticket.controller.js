@@ -23,6 +23,7 @@ export const createTicketController = async (req, res, next) => {
         description,
         priority,
         userId: req.user.id,
+        organizationId: req.user.organizationId,
       },
     });
 
@@ -74,6 +75,12 @@ export const getAllTicketsController = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const where = { isDeleted: false };
+    
+    // Admin/Agents only see their org tickets. Super Admin sees all.
+    if (req.user.role !== "SUPER_ADMIN") {
+      where.organizationId = req.user.organizationId;
+    }
+
     if (status) where.status = status;
     if (priority) where.priority = priority;
     if (assignedToId) where.assignedToId = assignedToId;
@@ -100,6 +107,11 @@ export const getAllTicketsController = async (req, res, next) => {
             email: true,
           },
         },
+        organization: {
+          select: {
+            name: true,
+          }
+        },
       },
       skip,
       take: limit,
@@ -125,8 +137,16 @@ export const updateStatusController = async (req, res, next) => {
     const { id } = req.params;
     const { status } = updateStatusSchema.parse(req.body);
 
-    const ticket = await prisma.ticket.update({
-      where: { id, isDeleted: false },
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    let ticket = await prisma.ticket.findFirst({ where: whereClause });
+    if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
+
+    ticket = await prisma.ticket.update({
+      where: { id },
       data: { status },
       include: {
         user: { select: { email: true, name: true } },
@@ -152,7 +172,12 @@ export const assignController = async (req, res, next) => {
     // agentId can be null (to unassign)
     const { assignedToId: agentId } = req.body;
 
-    const ticket = await prisma.ticket.findFirst({ where: { id, isDeleted: false } });
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
     if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
 
     let agentName = null;
@@ -194,9 +219,12 @@ export const addCommentController = async (req, res, next ) => {
     const { id: ticketId } = req.params;
     const { message } = commentSchema.parse(req.body);
 
-    const ticket = await prisma.ticket.findFirst({
-      where: { id: ticketId, isDeleted: false }
-    });
+    const whereClause = { id: ticketId, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
 
     if (!ticket) {
       return ApiResponse.error(res, 404, "Ticket not found");
@@ -228,8 +256,13 @@ export const getTicketByIdController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
     const ticket = await prisma.ticket.findFirst({
-      where: { id, isDeleted: false },
+      where: whereClause,
       include: {
         user: { select: { id: true, name: true, role: true } },
         assignedTo: { select: { id: true, name: true, role: true } },
@@ -260,8 +293,13 @@ export const deleteTicketController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
     const ticket = await prisma.ticket.findFirst({
-      where: { id, isDeleted: false }
+      where: whereClause
     });
 
     if (!ticket) {
@@ -289,7 +327,12 @@ export const updatePriorityController = async (req, res, next) => {
     const { id } = req.params;
     const { priority } = updatePrioritySchema.parse(req.body);
 
-    const ticket = await prisma.ticket.findFirst({ where: { id, isDeleted: false } });
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
     if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
 
     const updated = await prisma.ticket.update({
@@ -310,7 +353,12 @@ export const updateDueDateController = async (req, res, next) => {
     const { id } = req.params;
     const { dueDate } = req.body;
 
-    const ticket = await prisma.ticket.findFirst({ where: { id, isDeleted: false } });
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
     if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
 
     const parsedDate = dueDate ? new Date(dueDate) : null;
@@ -335,7 +383,12 @@ export const getActivityLogController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const ticket = await prisma.ticket.findFirst({ where: { id, isDeleted: false } });
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
     if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
 
     const logs = await prisma.activityLog.findMany({
