@@ -9,6 +9,7 @@ import AllTickets from "./pages/AllTickets";
 import TicketDetail from "./pages/TicketDetail";
 import Profile from "./pages/Profile";
 import UsersPage from "./pages/UsersPage";
+import OrganizationsPage from "./pages/OrganizationsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -36,7 +37,7 @@ function App() {
         <Route path="/tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/tickets/all" element={
           <ProtectedRoute>
-            <RoleRoute allowedRoles={["ADMIN", "AGENT"]}>
+            <RoleRoute allowedRoles={["ADMIN", "AGENT", "SUPER_ADMIN"]}>
               <AllTickets />
             </RoleRoute>
           </ProtectedRoute>
@@ -45,8 +46,15 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/users" element={
           <ProtectedRoute>
-            <RoleRoute allowedRoles={["ADMIN"]}>
+            <RoleRoute allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
               <UsersPage />
+            </RoleRoute>
+          </ProtectedRoute>
+        } />
+        <Route path="/organizations" element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={["SUPER_ADMIN"]}>
+              <OrganizationsPage />
             </RoleRoute>
           </ProtectedRoute>
         } />

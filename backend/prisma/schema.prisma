@@ -16,6 +16,17 @@ enum Role {
   USER
   AGENT
   ADMIN
+  SUPER_ADMIN
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  tickets  Ticket[]
 }
 
 model User {
@@ -27,6 +38,9 @@ model User {
   role      Role     @default(USER)
   resetToken String?
   resetTokenExpiry DateTime?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   tickets         Ticket[]
   assignedTickets Ticket[]     @relation("AssignedTickets")
@@ -56,6 +70,9 @@ model Ticket {
 
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
