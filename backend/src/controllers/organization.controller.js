@@ -1,6 +1,13 @@
 import { prisma } from "../db/client.js";
 import { ApiResponse } from "../utils/response.js";
 
+const resolveOrganizationId = (req) => {
+    if (req.user.role === "SUPER_ADMIN") {
+        return req.query.organizationId || null;
+    }
+    return req.user.organizationId || null;
+};
+
 export const getOrganizationsController = async (req, res, next) => {
     try {
         const organizations = await prisma.organization.findMany({
@@ -34,13 +41,86 @@ export const getOrganizationsController = async (req, res, next) => {
     }
 };
 
+export const getOrganizationSlaController = async (req, res, next) => {
+    try {
+        const organizationId = resolveOrganizationId(req);
+        if (!organizationId) {
+            return ApiResponse.error(res, 400, "organizationId is required");
+        }
+
+        const organization = await prisma.organization.findUnique({
+            where: { id: organizationId },
+            select: {
+                id: true,
+                name: true,
+                slaLowHours: true,
+                slaMediumHours: true,
+                slaHighHours: true,
+            }
+        });
+
+        if (!organization) {
+            return ApiResponse.error(res, 404, "Organization not found");
+        }
+
+        return ApiResponse.success(res, 200, "SLA settings fetched successfully", organization);
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const updateOrganizationSlaController = async (req, res, next) => {
+    try {
+        const organizationId = resolveOrganizationId(req);
+        if (!organizationId) {
+            return ApiResponse.error(res, 400, "organizationId is required");
+        }
+
+        const { slaLowHours, slaMediumHours, slaHighHours } = req.body;
+        const organization = await prisma.organization.findUnique({
+            where: { id: organizationId },
+            select: { id: true }
+        });
+
+        if (!organization) {
+            return ApiResponse.error(res, 404, "Organization not found");
+        }
+
+        const updated = await prisma.organization.update({
+            where: { id: organizationId },
+            data: { slaLowHours, slaMediumHours, slaHighHours },
+            select: {
+                id: true,
+                name: true,
+                slaLowHours: true,
+                slaMediumHours: true,
+                slaHighHours: true,
+            }
+        });
+
+        return ApiResponse.success(res, 200, "SLA settings updated successfully", updated);
+    } catch (error) {
+        return next(error);
+    }
+};
+
 export const deleteOrganizationController = async (req, res, next) => {
     try {
         const { id } = req.params;
 
         // Check if organization exists
         const org = await prisma.organization.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                _count: {
+                    select: {
+                        users: true,
+                        tickets: {
+                            where: { isDeleted: false }
+                        }
+                    }
+                }
+            }
         });
 
         if (!org) {

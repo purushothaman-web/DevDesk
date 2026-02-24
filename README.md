@@ -61,7 +61,7 @@ Read the [Backend README](./backend/README.md) and [API Docs](./backend/API_DOCS
 
 ### 2. Frontend Setup
 Navigate to the `frontend/` directory:
-1. Ensure your `.env` connects to the running local backend (`VITE_API_URL=http://localhost:5000/api`).
+1. Ensure your `.env` connects to the running local backend (`VITE_BASE_URL=http://localhost:5000`).
 2. Install dependencies: `npm install`
 3. Start Vite: `npm run dev`
 

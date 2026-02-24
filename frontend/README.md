@@ -49,7 +49,7 @@ npm install
 Create a `.env` file in the `frontend` directory:
 
 ```bash
-VITE_BASE_URL="http://localhost:5000/api"
+VITE_BASE_URL="http://localhost:5000"
 ```
 
 > Ensure this points to your running backend API.

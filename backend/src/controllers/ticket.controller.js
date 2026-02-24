@@ -6,6 +6,7 @@ import { commentSchema } from '../validators/comment.schema.js';
 import { updatePrioritySchema } from '../validators/priority.schema.js';
 import { ApiResponse } from "../utils/response.js";
 import { sendAssignmentMail, sendAgentAssignmentMail, sendStatusChangeEmail } from '../services/mail.service.js';
+import { computeSlaDueAt, getSlaHoursForPriority } from '../utils/sla.js';
 
 // Helper — fire-and-forget activity log write
 const logActivity = (ticketId, userId, action, detail) => {
@@ -16,6 +17,18 @@ export const createTicketController = async (req, res, next) => {
   try {
     const validatedData = createTicketSchema.parse(req.body);
     const { title, description, priority } = validatedData;
+    const organization = await prisma.organization.findUnique({
+      where: { id: req.user.organizationId },
+      select: { id: true, slaLowHours: true, slaMediumHours: true, slaHighHours: true },
+    });
+
+    if (!organization) {
+      return ApiResponse.error(res, 400, "Invalid organization for ticket creation");
+    }
+
+    const createdAt = new Date();
+    const slaHours = getSlaHoursForPriority(organization, priority);
+    const slaDueAt = computeSlaDueAt(createdAt, slaHours);
 
     const ticket = await prisma.ticket.create({
       data: {
@@ -24,6 +37,8 @@ export const createTicketController = async (req, res, next) => {
         priority,
         userId: req.user.id,
         organizationId: req.user.organizationId,
+        createdAt,
+        slaDueAt,
       },
     });
 
@@ -181,11 +196,19 @@ export const assignController = async (req, res, next) => {
     if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
 
     let agentName = null;
+    let agentEmail = null;
     if (agentId) {
-      const agent = await prisma.user.findUnique({ where: { id: agentId } });
+      const agent = await prisma.user.findUnique({
+        where: { id: agentId },
+        select: { id: true, name: true, email: true, role: true, organizationId: true },
+      });
       if (!agent) return ApiResponse.error(res, 404, "Agent not found");
       if (agent.role !== "AGENT") return ApiResponse.error(res, 400, "User is not an agent");
+      if (req.user.role !== "SUPER_ADMIN" && agent.organizationId !== ticket.organizationId) {
+        return ApiResponse.error(res, 403, "Forbidden: Agent belongs to another organization");
+      }
       agentName = agent.name;
+      agentEmail = agent.email;
     }
 
     const updatedTicket = await prisma.ticket.update({
@@ -202,7 +225,7 @@ export const assignController = async (req, res, next) => {
       (async () => {
         await sendAssignmentMail(updatedTicket.user.email, updatedTicket.user.name, updatedTicket.title, agentName);
         await new Promise(r => setTimeout(r, 1000));
-        await sendAgentAssignmentMail(agentName, agentName, updatedTicket.title, updatedTicket.id, updatedTicket.priority);
+        await sendAgentAssignmentMail(agentEmail, agentName, updatedTicket.title, updatedTicket.id, updatedTicket.priority);
       })();
     } else {
       logActivity(id, req.user.id, 'UNASSIGNED', 'Assignment cleared');
@@ -279,6 +302,9 @@ export const getTicketByIdController = async (req, res, next) => {
 
     if (!ticket) {
       return ApiResponse.error(res, 404, "Ticket not found");
+    }
+    if (req.user.role === "USER" && ticket.userId !== req.user.id) {
+      return ApiResponse.error(res, 403, "Forbidden");
     }
 
     return ApiResponse.success(res, 200, "Ticket fetched successfully", ticket);

@@ -9,6 +9,7 @@ import Badge from "../components/ui/Badge";
 import { Select } from "../components/ui/Field";
 import { Alert, LoadingRows } from "../components/ui/Feedback";
 import { EmptyState, Table, TableElement, TableHead, TableRow, Th, Td } from "../components/ui/DataTable";
+import { getSlaState } from "../utils/sla";
 
 const STATUSES = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH"];
@@ -118,25 +119,32 @@ const MyTickets = () => {
                                 <Th>Title</Th>
                                 <Th className="hidden sm:table-cell">Priority</Th>
                                 <Th className="hidden md:table-cell">Status</Th>
+                                <Th className="hidden lg:table-cell">SLA</Th>
                                 <Th className="hidden lg:table-cell">Created</Th>
                                 <Th className="text-right">Actions</Th>
                             </tr>
                         </TableHead>
                         <tbody>
-                            {paginated.map((ticket) => (
-                                <TableRow key={ticket.id}>
-                                    <Td className="font-medium">{ticket.title}</Td>
-                                    <Td className="hidden sm:table-cell"><Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} /></Td>
-                                    <Td className="hidden md:table-cell"><Badge label={ticket.status.replace("_", " ")} tone={toneForStatus(ticket.status)} /></Td>
-                                    <Td className="hidden lg:table-cell text-soft">{new Date(ticket.createdAt).toLocaleDateString()}</Td>
-                                    <Td>
-                                        <div className="flex justify-end gap-2">
-                                            <Link to={`/tickets/${ticket.id}`} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary-700)]">View</Link>
-                                            <button onClick={() => handleDelete(ticket.id)} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-danger-text)]">Delete</button>
-                                        </div>
-                                    </Td>
-                                </TableRow>
-                            ))}
+                            {paginated.map((ticket) => {
+                                const slaState = getSlaState(ticket);
+                                return (
+                                    <TableRow key={ticket.id}>
+                                        <Td className="font-medium">{ticket.title}</Td>
+                                        <Td className="hidden sm:table-cell"><Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} /></Td>
+                                        <Td className="hidden md:table-cell"><Badge label={ticket.status.replace("_", " ")} tone={toneForStatus(ticket.status)} /></Td>
+                                        <Td className="hidden lg:table-cell">
+                                            {slaState ? <Badge label={slaState.label} tone={slaState.tone} size="sm" /> : <span className="text-xs text-soft">N/A</span>}
+                                        </Td>
+                                        <Td className="hidden lg:table-cell text-soft">{new Date(ticket.createdAt).toLocaleDateString()}</Td>
+                                        <Td>
+                                            <div className="flex justify-end gap-2">
+                                                <Link to={`/tickets/${ticket.id}`} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary-700)]">View</Link>
+                                                <button onClick={() => handleDelete(ticket.id)} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-danger-text)]">Delete</button>
+                                            </div>
+                                        </Td>
+                                    </TableRow>
+                                );
+                            })}
                         </tbody>
                     </TableElement>
                     {totalPages > 1 && (

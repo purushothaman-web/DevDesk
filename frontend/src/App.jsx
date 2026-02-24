@@ -10,16 +10,25 @@ import TicketDetail from "./pages/TicketDetail";
 import Profile from "./pages/Profile";
 import UsersPage from "./pages/UsersPage";
 import OrganizationsPage from "./pages/OrganizationsPage";
+import SlaSettings from "./pages/SlaSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
-// Redirects to /dashboard if the user's role is not in allowedRoles
+// Redirects to /tickets for Users and /dashboard for elevated roles if they visit a page they aren't allowed
 const RoleRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
   if (user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    const fallback = user.role === "USER" ? "/tickets" : "/dashboard";
+    return <Navigate to={fallback} replace />;
   }
   return children;
+};
+
+// Smart catch-all redirect based on user role
+const CatchAll = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={user.role === "USER" ? "/tickets" : "/dashboard"} replace />;
 };
 
 function App() {
@@ -33,7 +42,13 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected */}
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={["ADMIN", "AGENT", "SUPER_ADMIN"]}>
+              <Dashboard />
+            </RoleRoute>
+          </ProtectedRoute>
+        } />
         <Route path="/tickets" element={<ProtectedRoute><MyTickets /></ProtectedRoute>} />
         <Route path="/tickets/all" element={
           <ProtectedRoute>
@@ -58,9 +73,16 @@ function App() {
             </RoleRoute>
           </ProtectedRoute>
         } />
+        <Route path="/settings/sla" element={
+          <ProtectedRoute>
+            <RoleRoute allowedRoles={["ADMIN"]}>
+              <SlaSettings />
+            </RoleRoute>
+          </ProtectedRoute>
+        } />
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Catch-all: send USERs to tickets, elevated roles to dashboard */}
+        <Route path="*" element={<CatchAll />} />
       </Routes>
     </BrowserRouter>
   );

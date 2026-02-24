@@ -10,6 +10,7 @@ import { errorMiddleware } from './src/middleware/error.middleware.js';
 import { globalRateLimit } from './src/middleware/ratelimit.middleware.js';
 import morgan from 'morgan';
 import { seedSuperAdmin } from './src/utils/seed.js';
+import { startSlaScheduler } from './src/services/sla.service.js';
 
 dotenv.config();
 const app = express();
@@ -45,6 +46,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.SERVERLESS !== 'true') 
   app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await seedSuperAdmin();
+    startSlaScheduler();
   });
 }
 

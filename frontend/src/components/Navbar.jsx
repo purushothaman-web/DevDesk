@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Badge from "./ui/Badge";
 import Button from "./ui/Button";
+import logo from "../assets/logo.png";
 
 const Navbar = () => {
     const { user, logout } = useAuth();
@@ -13,11 +14,13 @@ const Navbar = () => {
     const isAdminOrAgent = user?.role === "ADMIN" || user?.role === "AGENT";
 
     const links = useMemo(() => {
-        const base = [{ to: "/dashboard", label: "Dashboard" }];
+        const base = [];
+        if (isAdminOrAgent || user?.role === "SUPER_ADMIN") base.push({ to: "/dashboard", label: "Dashboard" });
         if (user?.role !== "ADMIN" && user?.role !== "SUPER_ADMIN") base.push({ to: "/tickets", label: "My Tickets" });
         if (isAdminOrAgent || user?.role === "SUPER_ADMIN") base.push({ to: "/tickets/all", label: "All Tickets" });
         if (user?.role === "ADMIN" || user?.role === "SUPER_ADMIN") base.push({ to: "/users", label: "Users" });
         if (user?.role === "SUPER_ADMIN") base.push({ to: "/organizations", label: "Organizations" });
+        if (user?.role === "ADMIN") base.push({ to: "/settings/sla", label: "SLA Settings" });
         base.push({ to: "/profile", label: "Profile" });
         return base;
     }, [isAdminOrAgent, user?.role]);
@@ -37,7 +40,7 @@ const Navbar = () => {
             <nav className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-white/90 backdrop-blur">
                 <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
                     <Link to="/dashboard" className="focus-ring inline-flex items-center gap-2 rounded-[var(--radius-sm)] px-1 py-1">
-                        <img src="/src/assets/logo.png" alt="DevDesk" className="h-14 w-auto object-contain" />
+                        <img src={logo} alt="DevDesk" className="h-14 w-auto object-contain" />
                     </Link>
 
                     <div className="hidden items-center gap-1 lg:flex">

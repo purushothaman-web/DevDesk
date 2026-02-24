@@ -11,6 +11,7 @@ import Badge from "../components/ui/Badge";
 import { Input, Select } from "../components/ui/Field";
 import { Alert, LoadingRows } from "../components/ui/Feedback";
 import { EmptyState, Table, TableElement, TableHead, TableRow, Th, Td } from "../components/ui/DataTable";
+import { getSlaState, formatDateTime } from "../utils/sla";
 
 const STATUSES = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH"];
@@ -213,6 +214,7 @@ const AllTickets = () => {
                                 <Th className="hidden sm:table-cell">Requester</Th>
                                 <Th className="hidden sm:table-cell">Priority</Th>
                                 <Th>Status</Th>
+                                <Th className="hidden md:table-cell">SLA</Th>
                                 <Th className="hidden md:table-cell">Due Date</Th>
                                 <Th className="text-right">Actions</Th>
                             </tr>
@@ -220,6 +222,7 @@ const AllTickets = () => {
                         <tbody>
                             {tickets.map((ticket) => {
                                 const isOverdue = ticket.dueDate && new Date(ticket.dueDate) < new Date() && ticket.status !== "CLOSED" && ticket.status !== "RESOLVED";
+                                const slaState = getSlaState(ticket);
                                 return (
                                     <TableRow key={ticket.id} className={selectedIds.has(ticket.id) ? "bg-[var(--color-primary-50)]" : ""}>
                                         <Td><input type="checkbox" checked={selectedIds.has(ticket.id)} onChange={() => toggleSelectOne(ticket.id)} /></Td>
@@ -239,6 +242,14 @@ const AllTickets = () => {
                                             >
                                                 {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
                                             </select>
+                                        </Td>
+                                        <Td className="hidden md:table-cell">
+                                            {slaState ? (
+                                                <div className="space-y-1">
+                                                    <Badge label={slaState.label} tone={slaState.tone} />
+                                                    <p className="text-[10px] text-soft">Due {formatDateTime(ticket.slaDueAt)}</p>
+                                                </div>
+                                            ) : <span className="text-xs text-soft">N/A</span>}
                                         </Td>
                                         <Td className={`hidden md:table-cell text-xs ${isOverdue ? "text-[var(--color-danger-text)]" : "text-soft"}`}>
                                             {ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : "-"}

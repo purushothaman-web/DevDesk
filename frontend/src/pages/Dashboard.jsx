@@ -61,34 +61,61 @@ const Dashboard = () => {
                             <StatCard label="Medium Priority" value={stats.mediumPriority} />
                             <StatCard label="Low Priority" value={stats.lowPriority} />
                         </div>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <StatCard label="Due Today" value={stats.dueToday} />
+                            <StatCard label="SLA At Risk" value={stats.atRisk} />
+                            <StatCard label="SLA Breached" value={stats.breached} />
+                        </div>
                     </div>
 
-                    <Card className="h-fit">
-                        {user?.role === "AGENT" ? (
-                            <>
-                                <h2 className="text-lg font-semibold text-[var(--color-text)]">Your Workload</h2>
-                                <p className="mt-2 text-sm text-soft">Active tickets currently assigned to you.</p>
-                                <p className="mt-4 text-4xl font-bold text-[var(--color-primary-700)]">{stats.assignedToMe}</p>
-                            </>
-                        ) : (
-                            <>
-                                <h2 className="text-lg font-semibold text-[var(--color-text)]">Agent Workload</h2>
-                                <div className="mt-3 space-y-2">
-                                    {workload.length === 0 ? (
-                                        <p className="text-sm text-soft">No agents found.</p>
-                                    ) : (
-                                        workload.map((agent) => (
-                                            <div key={agent.id} className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
-                                                <p className="text-sm font-semibold text-[var(--color-text)]">{agent.name}</p>
-                                                <p className="text-xs text-soft">{agent.email}</p>
-                                                <p className="mt-1 text-xs text-soft">Open: {agent.open} | In Progress: {agent.inProgress} | Total: {agent.total}</p>
+                    <div className="space-y-6">
+                        <Card className="h-fit">
+                            {user?.role === "AGENT" ? (
+                                <>
+                                    <h2 className="text-lg font-semibold text-[var(--color-text)]">Your Workload</h2>
+                                    <div className="mt-4 space-y-3">
+                                        <div className="flex items-center justify-between rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                                            <span className="text-sm font-medium text-[var(--color-text)]">Total Assigned</span>
+                                            <span className="text-xl font-bold text-[var(--color-primary-700)]">{stats.myWorkload?.total ?? stats.assignedToMe}</span>
+                                        </div>
+                                        {stats.myWorkload && (
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 text-center">
+                                                    <p className="text-xs text-[var(--color-text-soft)]">Open</p>
+                                                    <p className="text-base font-bold text-[var(--color-text)]">{stats.myWorkload.open}</p>
+                                                </div>
+                                                <div className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 text-center">
+                                                    <p className="text-xs text-[var(--color-text-soft)]">Progress</p>
+                                                    <p className="text-base font-bold text-[var(--color-text)]">{stats.myWorkload.inProgress}</p>
+                                                </div>
+                                                <div className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-2 text-center">
+                                                    <p className="text-xs text-[var(--color-text-soft)]">Resolved</p>
+                                                    <p className="text-base font-bold text-[var(--color-text)]">{stats.myWorkload.resolved}</p>
+                                                </div>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </Card>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 className="text-lg font-semibold text-[var(--color-text)]">Agent Workload</h2>
+                                    <div className="mt-3 space-y-2">
+                                        {workload.length === 0 ? (
+                                            <p className="text-sm text-[var(--color-text-soft)]">No agents found.</p>
+                                        ) : (
+                                            workload.map((agent) => (
+                                                <div key={agent.id} className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                                                    <p className="text-sm font-semibold text-[var(--color-text)]">{agent.name}</p>
+                                                    <p className="text-xs text-[var(--color-text-soft)]">{agent.email}</p>
+                                                    <p className="mt-1 text-xs text-[var(--color-text-soft)]">Open: {agent.open} | In Progress: {agent.inProgress} | Total: {agent.total}</p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </Card>
+                    </div>
                 </div>
             ) : null}
         </PageShell>

@@ -181,3 +181,26 @@ export const sendResetPasswordEmail = async (to, resetLink) => {
         console.error("Failed to send reset password mail:", error);
     }
 };
+
+export const sendSlaBreachEmail = async (to, userName, ticketTitle, slaDueAt) => {
+    const subject = "DevDesk: SLA breached on your ticket";
+    const html = baseTemplate(`
+      <p>Hi <strong>${userName}</strong>,</p>
+      <p>Your ticket has exceeded the promised SLA window and has been escalated.</p>
+      <div class="info-card">
+        <table>
+          <tr><td>Ticket</td><td>${ticketTitle}</td></tr>
+          <tr><td>SLA Due</td><td>${new Date(slaDueAt).toLocaleString()}</td></tr>
+        </table>
+      </div>
+      <p>Our team has been notified and will prioritize this issue.</p>
+      <p>Thanks,<br/><strong>DevDesk Support Team</strong></p>
+    `);
+
+    try {
+        await sendMail(to, subject, html);
+        console.log("SLA breach mail sent successfully");
+    } catch (error) {
+        console.error("Failed to send SLA breach mail:", error);
+    }
+};

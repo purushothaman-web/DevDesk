@@ -19,6 +19,7 @@ import {
 import { getAgents } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import { formatDateTime, getSlaState } from "../utils/sla";
 
 const STATUSES = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH"];
@@ -65,6 +66,7 @@ const TicketDetail = () => {
     }, [id, isAdmin]);
 
     const isOverdue = ticket?.dueDate && new Date(ticket.dueDate) < new Date() && ticket.status !== "CLOSED" && ticket.status !== "RESOLVED";
+    const slaState = getSlaState(ticket);
 
     const handleStatusChange = async (status) => {
         try {
@@ -200,6 +202,7 @@ const TicketDetail = () => {
                             <Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} />
                             <Badge label={ticket.status.replace("_", " ")} tone={toneForStatus(ticket.status)} />
                             {ticket.dueDate ? <Badge label={`${isOverdue ? "Overdue" : "Due"} ${new Date(ticket.dueDate).toLocaleDateString()}`} tone={isOverdue ? "danger" : "neutral"} /> : null}
+                            {slaState ? <Badge label={slaState.label} tone={slaState.tone} /> : null}
                             <span className="text-xs text-soft">by {ticket.user?.name} | {new Date(ticket.createdAt).toLocaleDateString()}</span>
                         </div>
                     </div>
@@ -213,6 +216,7 @@ const TicketDetail = () => {
                     </div>
                 </div>
                 <p className="mt-4 whitespace-pre-wrap text-sm text-[var(--color-text-soft)]">{ticket.description}</p>
+                {ticket.slaDueAt ? <p className="mt-2 text-xs text-soft">SLA due: {formatDateTime(ticket.slaDueAt)}</p> : null}
                 {isAdminOrAgent ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                         <Select value={ticket.priority} onChange={(e) => handlePriorityChange(e.target.value)} className="min-w-36">

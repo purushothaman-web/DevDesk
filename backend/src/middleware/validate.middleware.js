@@ -8,7 +8,7 @@ export const validate = (schema) => (req, res, next) => {
       req.body = parseResult.data;
       next();
     } else {
-      const errors = parseResult.error.errors.map(err => err.message).join(", ");
+      const errors = parseResult.error.issues.map(err => err.message).join(", ");
       return ApiResponse.error(res, 400, errors);
     }
   } catch (error) {
