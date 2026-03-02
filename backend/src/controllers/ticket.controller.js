@@ -1,5 +1,5 @@
 import { prisma } from '../db/client.js';
-import { createTicketSchema } from '../validators/ticket.schema.js';
+import { createTicketSchema, updateTicketSchema } from '../validators/ticket.schema.js';
 import { updateStatusSchema } from '../validators/status.schema.js';
 import { assignTicketSchema } from '../validators/assign.schema.js';
 import { commentSchema } from '../validators/comment.schema.js';
@@ -7,6 +7,10 @@ import { updatePrioritySchema } from '../validators/priority.schema.js';
 import { ApiResponse } from "../utils/response.js";
 import { sendAssignmentMail, sendAgentAssignmentMail, sendStatusChangeEmail } from '../services/mail.service.js';
 import { computeSlaDueAt, getSlaHoursForPriority } from '../utils/sla.js';
+import fs from 'fs';
+import cloudinary from '../config/cloudinary.js';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Helper — fire-and-forget activity log write
 const logActivity = (ticketId, userId, action, detail) => {
@@ -16,7 +20,7 @@ const logActivity = (ticketId, userId, action, detail) => {
 export const createTicketController = async (req, res, next) => {
   try {
     const validatedData = createTicketSchema.parse(req.body);
-    const { title, description, priority } = validatedData;
+    const { title, description, priority, tags, category } = validatedData;
     const organization = await prisma.organization.findUnique({
       where: { id: req.user.organizationId },
       select: { id: true, slaLowHours: true, slaMediumHours: true, slaHighHours: true },
@@ -35,6 +39,8 @@ export const createTicketController = async (req, res, next) => {
         title,
         description,
         priority,
+        tags: tags || [],
+        category: category || null,
         userId: req.user.id,
         organizationId: req.user.organizationId,
         createdAt,
@@ -43,12 +49,12 @@ export const createTicketController = async (req, res, next) => {
     });
 
     if (req.files && req.files.length > 0) {
-      const attachments = await Promise.all(
+      await Promise.all(
         req.files.map(file =>
           prisma.attachment.create({
             data: {
               fileName: file.originalname,
-              filePath: file.path,
+              filePath: isProduction ? file.path : file.path, // Cloudinary returns secure_url as path
               mimeType: file.mimetype,
               ticketId: ticket.id,
             },
@@ -78,7 +84,7 @@ export const getTicketsController = async (req, res, next) => {
 
 export const getAllTicketsController = async (req, res, next) => {
   try {
-    let { status, priority, assignedToId, search, page, limit } = req.query;
+    let { status, priority, assignedToId, search, tag, category, page, limit } = req.query;
 
     page = parseInt(page);
     limit = parseInt(limit);
@@ -99,6 +105,8 @@ export const getAllTicketsController = async (req, res, next) => {
     if (status) where.status = status;
     if (priority) where.priority = priority;
     if (assignedToId) where.assignedToId = assignedToId;
+    if (category) where.category = category;
+    if (tag) where.tags = { has: tag };
     
     if (search) {
       where.OR = [
@@ -184,7 +192,6 @@ export const updateStatusController = async (req, res, next) => {
 export const assignController = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // agentId can be null (to unassign)
     const { assignedToId: agentId } = req.body;
 
     const whereClause = { id, isDeleted: false };
@@ -237,7 +244,7 @@ export const assignController = async (req, res, next) => {
   }
 };
 
-export const addCommentController = async (req, res, next ) => {
+export const addCommentController = async (req, res, next) => {
   try {
     const { id: ticketId } = req.params;
     const { message } = commentSchema.parse(req.body);
@@ -253,11 +260,7 @@ export const addCommentController = async (req, res, next ) => {
       return ApiResponse.error(res, 404, "Ticket not found");
     }
 
-    // If USER, only allow commenting on own ticket
-    if (
-      req.user.role === "USER" &&
-      ticket.userId !== req.user.id
-    ) {
+    if (req.user.role === "USER" && ticket.userId !== req.user.id) {
       return ApiResponse.error(res, 403, "Forbidden");
     }
 
@@ -289,15 +292,14 @@ export const getTicketByIdController = async (req, res, next) => {
       include: {
         user: { select: { id: true, name: true, role: true } },
         assignedTo: { select: { id: true, name: true, role: true } },
+        attachments: true,
         comments: {
           include: {
-            user: {
-        select: { id: true, name: true, role: true }
+            user: { select: { id: true, name: true, role: true } }
+          },
+          orderBy: { createdAt: "asc" }
+        }
       }
-    },
-    orderBy: { createdAt: "asc" }
-  }
-}
     });
 
     if (!ticket) {
@@ -324,9 +326,7 @@ export const deleteTicketController = async (req, res, next) => {
       whereClause.organizationId = req.user.organizationId;
     }
 
-    const ticket = await prisma.ticket.findFirst({
-      where: whereClause
-    });
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
 
     if (!ticket) {
       return ApiResponse.error(res, 404, "Ticket not found");
@@ -424,6 +424,88 @@ export const getActivityLogController = async (req, res, next) => {
     });
 
     return ApiResponse.success(res, 200, "Activity log fetched successfully", logs);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// ── NEW: Update ticket title/description/tags/category ─────────────────────
+export const updateTicketController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updateData = updateTicketSchema.parse(req.body);
+
+    const whereClause = { id, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
+    if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
+
+    // Only ticket owner, ADMIN, or SUPER_ADMIN can edit
+    if (req.user.role === "USER" && ticket.userId !== req.user.id) {
+      return ApiResponse.error(res, 403, "Forbidden");
+    }
+
+    const updated = await prisma.ticket.update({
+      where: { id },
+      data: updateData,
+    });
+
+    logActivity(id, req.user.id, 'EDITED', 'Ticket details updated');
+
+    return ApiResponse.success(res, 200, "Ticket updated successfully", updated);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// ── NEW: Delete a single attachment ────────────────────────────────────────
+export const deleteAttachmentController = async (req, res, next) => {
+  try {
+    const { id: ticketId, attachmentId } = req.params;
+
+    const whereClause = { id: ticketId, isDeleted: false };
+    if (req.user.role !== "SUPER_ADMIN") {
+      whereClause.organizationId = req.user.organizationId;
+    }
+
+    const ticket = await prisma.ticket.findFirst({ where: whereClause });
+    if (!ticket) return ApiResponse.error(res, 404, "Ticket not found");
+
+    // Only ticket owner or ADMIN/SUPER_ADMIN can delete attachments
+    if (req.user.role === "USER" && ticket.userId !== req.user.id) {
+      return ApiResponse.error(res, 403, "Forbidden");
+    }
+
+    const attachment = await prisma.attachment.findFirst({
+      where: { id: attachmentId, ticketId },
+    });
+    if (!attachment) return ApiResponse.error(res, 404, "Attachment not found");
+
+    // Delete physical file (local dev) or Cloudinary (production)
+    if (isProduction) {
+      // Extract public_id from cloudinary URL
+      try {
+        const parts = attachment.filePath.split('/');
+        const publicIdWithExt = parts.slice(-2).join('/'); // folder/filename
+        const publicId = publicIdWithExt.replace(/\.[^/.]+$/, '');
+        await cloudinary.uploader.destroy(publicId);
+      } catch (_) { /* ignore if already deleted */ }
+    } else {
+      try {
+        if (fs.existsSync(attachment.filePath)) {
+          fs.unlinkSync(attachment.filePath);
+        }
+      } catch (_) { /* ignore if already deleted */ }
+    }
+
+    await prisma.attachment.delete({ where: { id: attachmentId } });
+
+    logActivity(ticketId, req.user.id, 'ATTACHMENT_DELETED', `Attachment "${attachment.fileName}" removed`);
+
+    return ApiResponse.success(res, 200, "Attachment deleted successfully", { id: attachmentId });
   } catch (error) {
     return next(error);
   }

@@ -156,48 +156,50 @@ const AllTickets = () => {
                 </div>
             }
         >
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-6">
-                <div className="lg:col-span-2">
+            {/* Filter Toolbar */}
+            <div className="mb-4 flex flex-wrap gap-3 items-center rounded-[var(--radius-xl)] bg-[var(--color-surface)] p-3 border border-[var(--color-border)] shadow-sm">
+                <div className="flex-1 min-w-[200px]">
                     <Input value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }} placeholder="Search tickets..." aria-label="Search tickets" />
                 </div>
-                <Select name="status" value={filters.status} onChange={(e) => { setFilters((prev) => ({ ...prev, status: e.target.value })); setPage(1); }}>
+                <Select name="status" value={filters.status} onChange={(e) => { setFilters((prev) => ({ ...prev, status: e.target.value })); setPage(1); }} className="w-40">
                     <option value="">All Statuses</option>
                     {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
                 </Select>
-                <Select name="priority" value={filters.priority} onChange={(e) => { setFilters((prev) => ({ ...prev, priority: e.target.value })); setPage(1); }}>
+                <Select name="priority" value={filters.priority} onChange={(e) => { setFilters((prev) => ({ ...prev, priority: e.target.value })); setPage(1); }} className="w-40">
                     <option value="">All Priorities</option>
                     {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
                 </Select>
-                {isAgent ? (
-                    <Button variant={assignedToMe ? "primary" : "secondary"} onClick={() => { setAssignedToMe((prev) => !prev); setPage(1); }}>
+                {isAgent && (
+                    <Button size="sm" variant={assignedToMe ? "primary" : "ghost"} onClick={() => { setAssignedToMe((prev) => !prev); setPage(1); }}>
                         Assigned to me
                     </Button>
-                ) : <div />}
-                {(filters.status || filters.priority || searchTerm) ? (
-                    <Button variant="ghost" onClick={() => { setFilters({ status: "", priority: "" }); setSearchTerm(""); setPage(1); }}>
+                )}
+                {(filters.status || filters.priority || searchTerm) && (
+                    <Button size="sm" variant="ghost" onClick={() => { setFilters({ status: "", priority: "" }); setSearchTerm(""); setPage(1); }} className="text-[var(--color-danger-text)]">
                         Clear
                     </Button>
-                ) : <div />}
+                )}
             </div>
 
-            {selectedIds.size > 0 ? (
-                <div className="surface-card flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] p-3">
-                    <p className="text-sm font-semibold text-[var(--color-text)]">{selectedIds.size} selected</p>
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-primary-300)] bg-[var(--color-primary-50)] px-5 py-3">
+                    <p className="text-[12px] font-extrabold uppercase tracking-widest text-[var(--color-primary-700)]">{selectedIds.size} selected</p>
                     <Select disabled={bulkActionLoading} onChange={(e) => { handleBulkStatus(e.target.value); e.target.value = ""; }} className="w-44">
-                        <option value="">Change Status...</option>
-                        {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
+                        <option value="">Change Status…</option>
+                        {STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
                     </Select>
-                    {isAdmin ? (
+                    {isAdmin && (
                         <Select disabled={bulkActionLoading} onChange={(e) => { handleBulkAssign(e.target.value); e.target.value = ""; }} className="w-44">
-                            <option value="">Assign To...</option>
-                            {agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
+                            <option value="">Assign To…</option>
+                            {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                         </Select>
-                    ) : null}
-                    <Button variant="ghost" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
                 </div>
-            ) : null}
+            )}
 
-            {error ? <Alert tone="danger">{error}</Alert> : null}
+            {error && <Alert tone="danger">{error}</Alert>}
 
             {loading ? (
                 <LoadingRows rows={5} />
@@ -208,7 +210,9 @@ const AllTickets = () => {
                     <TableElement>
                         <TableHead>
                             <tr>
-                                <Th className="w-8"><input type="checkbox" checked={selectedIds.size === tickets.length && tickets.length > 0} onChange={toggleSelectAll} /></Th>
+                                <Th className="w-8">
+                                    <input type="checkbox" checked={selectedIds.size === tickets.length && tickets.length > 0} onChange={toggleSelectAll} />
+                                </Th>
                                 <Th>Title</Th>
                                 {user?.role === "SUPER_ADMIN" && <Th className="hidden sm:table-cell">Organization</Th>}
                                 <Th className="hidden sm:table-cell">Requester</Th>
@@ -225,20 +229,24 @@ const AllTickets = () => {
                                 const slaState = getSlaState(ticket);
                                 return (
                                     <TableRow key={ticket.id} className={selectedIds.has(ticket.id) ? "bg-[var(--color-primary-50)]" : ""}>
-                                        <Td><input type="checkbox" checked={selectedIds.has(ticket.id)} onChange={() => toggleSelectOne(ticket.id)} /></Td>
-                                        <Td className="font-medium">{ticket.title}</Td>
+                                        <Td>
+                                            <input type="checkbox" checked={selectedIds.has(ticket.id)} onChange={() => toggleSelectOne(ticket.id)} />
+                                        </Td>
+                                        <Td className="font-bold text-[var(--color-text)] tracking-tight max-w-xs truncate">{ticket.title}</Td>
                                         {user?.role === "SUPER_ADMIN" && (
                                             <Td className="hidden sm:table-cell">
                                                 <Badge label={ticket.organization?.name || "None"} tone="neutral" />
                                             </Td>
                                         )}
-                                        <Td className="hidden sm:table-cell text-soft">{ticket.user?.name}</Td>
-                                        <Td className="hidden sm:table-cell"><Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} /></Td>
+                                        <Td className="hidden sm:table-cell font-medium text-soft">{ticket.user?.name}</Td>
+                                        <Td className="hidden sm:table-cell">
+                                            <Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} />
+                                        </Td>
                                         <Td>
                                             <select
                                                 value={ticket.status}
                                                 onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
-                                                className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white px-2 py-1 text-xs font-semibold text-[var(--color-text)]"
+                                                className="focus-ring rounded-full border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[var(--color-text)] outline-none transition-colors hover:bg-[var(--color-border)]"
                                             >
                                                 {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
                                             </select>
@@ -247,17 +255,20 @@ const AllTickets = () => {
                                             {slaState ? (
                                                 <div className="space-y-1">
                                                     <Badge label={slaState.label} tone={slaState.tone} />
-                                                    <p className="text-[10px] text-soft">Due {formatDateTime(ticket.slaDueAt)}</p>
+                                                    <p className="text-[10px] font-semibold text-soft">Due {formatDateTime(ticket.slaDueAt)}</p>
                                                 </div>
-                                            ) : <span className="text-xs text-soft">N/A</span>}
+                                            ) : <span className="text-[11px] font-bold tracking-widest text-soft uppercase">N/A</span>}
                                         </Td>
-                                        <Td className={`hidden md:table-cell text-xs ${isOverdue ? "text-[var(--color-danger-text)]" : "text-soft"}`}>
-                                            {ticket.dueDate ? new Date(ticket.dueDate).toLocaleDateString() : "-"}
+                                        <Td className={`hidden md:table-cell text-[12px] font-bold ${isOverdue ? "text-[var(--color-danger-text)]" : "text-soft"}`}>
+                                            {ticket.dueDate ? (isOverdue ? "Overdue" : new Date(ticket.dueDate).toLocaleDateString()) : "—"}
                                         </Td>
                                         <Td>
                                             <div className="flex justify-end">
-                                                <Link to={`/tickets/${ticket.id}`} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary-700)]">
-                                                    View
+                                                <Link
+                                                    to={`/tickets/${ticket.id}`}
+                                                    className="focus-ring inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[var(--color-text)] hover:border-[var(--color-primary-300)] hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)] transition-colors"
+                                                >
+                                                    View →
                                                 </Link>
                                             </div>
                                         </Td>
@@ -267,18 +278,18 @@ const AllTickets = () => {
                         </tbody>
                     </TableElement>
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t border-[var(--color-border)] px-4 py-3">
-                            <p className="text-xs text-soft">Page {page} of {totalPages}</p>
+                        <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3">
+                            <p className="text-[11px] font-extrabold uppercase tracking-widest text-soft">Page {page} of {totalPages}</p>
                             <div className="flex gap-2">
-                                <Button size="sm" variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
-                                <Button size="sm" variant="secondary" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
+                                <Button size="sm" variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>← Prev</Button>
+                                <Button size="sm" variant="secondary" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next →</Button>
                             </div>
                         </div>
                     )}
                 </Table>
             )}
-            
-            {showModal ? <CreateTicketModal onClose={() => setShowModal(false)} onCreated={handleCreated} /> : null}
+
+            {showModal && <CreateTicketModal onClose={() => setShowModal(false)} onCreated={handleCreated} />}
         </PageShell>
     );
 };

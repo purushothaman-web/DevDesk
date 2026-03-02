@@ -1,11 +1,12 @@
 const Card = ({ children, className = "", elevated = false, interactive = false }) => (
     <section
         className={[
-            "surface-card rounded-[var(--radius-lg)] p-5",
-            elevated ? "shadow-[var(--shadow-md)]" : "",
-            interactive ? "transition duration-[var(--duration-base)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]" : "",
+            "bg-[var(--color-surface)] rounded-[var(--radius-xl)] p-6 transition-all duration-[var(--duration-base)]",
+            elevated ? "shadow-[var(--shadow-md)] shadow-[var(--shadow-sm)] border border-[var(--color-border)]" : "border shadow-sm border-[var(--color-border)]",
+            interactive ? "hover:-translate-y-1 hover:shadow-[var(--shadow-md)] hover:border-[var(--color-border-strong)] cursor-pointer" : "",
             className,
         ].join(" ")}
+        style={{ borderRadius: "min(var(--radius-lg), 24px)" }} // Very rounded cards feel fresh
     >
         {children}
     </section>

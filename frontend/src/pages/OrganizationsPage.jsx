@@ -4,6 +4,7 @@ import { getOrganizations, deleteOrganization } from "../api/organizations";
 import toast from "react-hot-toast";
 import { Alert, LoadingRows } from "../components/ui/Feedback";
 import { EmptyState, Table, TableElement, TableHead, TableRow, Th, Td } from "../components/ui/DataTable";
+import Button from "../components/ui/Button";
 
 const OrganizationsPage = () => {
     const [organizations, setOrganizations] = useState([]);
@@ -22,39 +23,32 @@ const OrganizationsPage = () => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchOrgs();
-    }, [fetchOrgs]);
+    useEffect(() => { fetchOrgs(); }, [fetchOrgs]);
 
     const handleDelete = async (id, name) => {
         toast(
             (t) => (
-                <div className="flex flex-col gap-2">
-                    <span className="text-sm">Delete organization <strong>{name}</strong>?</span>
-                    <span className="text-xs text-[var(--color-danger-text)]">This action cannot be undone.</span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => toast.dismiss(t.id)}
-                            className="rounded border border-[var(--color-border)] px-2 py-1 text-xs font-semibold text-[var(--color-text-soft)] hover:bg-[var(--color-surface-hover)]"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={async () => {
-                                toast.dismiss(t.id);
-                                try {
-                                    await deleteOrganization(id);
-                                    setOrganizations((prev) => prev.filter((org) => org.id !== id));
-                                    toast.success("Organization deleted.");
-                                } catch (err) {
-                                    toast.error(err?.response?.data?.message || "Delete failed.");
-                                }
-                            }}
-                            className="rounded bg-[var(--color-danger-bg)] px-2 py-1 text-xs font-semibold text-white hover:bg-[var(--color-danger-hover)]"
-                        >
-                            Confirm Delete
-                        </button>
+                <div className="flex items-center gap-3 p-1">
+                    <div className="flex-1">
+                        <p className="text-[13px] font-bold uppercase tracking-wide text-[var(--color-text)]">Delete <span className="text-[var(--color-danger-text)]">{name}</span>?</p>
+                        <p className="text-[11px] font-medium text-soft mt-0.5">This cannot be undone.</p>
                     </div>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await deleteOrganization(id);
+                                setOrganizations((prev) => prev.filter((org) => org.id !== id));
+                                toast.success("Organization deleted.");
+                            } catch (err) {
+                                toast.error(err?.response?.data?.message || "Delete failed.");
+                            }
+                        }}
+                        className="rounded bg-[var(--color-danger-bg)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-danger-text)] hover:opacity-80 transition-opacity shrink-0"
+                    >
+                        Confirm
+                    </button>
+                    <button onClick={() => toast.dismiss(t.id)} className="text-[11px] font-bold uppercase tracking-wide text-soft hover:text-[var(--color-text)] shrink-0">Cancel</button>
                 </div>
             ),
             { duration: 6000 }
@@ -66,7 +60,7 @@ const OrganizationsPage = () => {
             title="Organizations"
             subtitle="Manage all registered tenants and workspaces on the platform."
         >
-            {error ? <Alert tone="danger">{error}</Alert> : null}
+            {error && <Alert tone="danger">{error}</Alert>}
 
             {loading ? (
                 <LoadingRows rows={5} />
@@ -80,10 +74,10 @@ const OrganizationsPage = () => {
                     <TableElement>
                         <TableHead>
                             <tr>
-                                <Th>Organization Name</Th>
-                                <Th>Members</Th>
-                                <Th>Tickets</Th>
-                                <Th className="hidden sm:table-cell">Created At</Th>
+                                <Th>Organization</Th>
+                                <Th className="text-center">Members</Th>
+                                <Th className="text-center">Tickets</Th>
+                                <Th className="hidden sm:table-cell">Created</Th>
                                 <Th className="text-right">Actions</Th>
                             </tr>
                         </TableHead>
@@ -92,20 +86,22 @@ const OrganizationsPage = () => {
                                 <TableRow key={org.id}>
                                     <Td>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-primary-100)] text-xs font-semibold text-[var(--color-primary-700)]">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-100)] text-sm font-extrabold text-[var(--color-primary-700)] shadow-sm">
                                                 {org.name?.charAt(0)?.toUpperCase()}
                                             </div>
-                                            <p className="font-medium text-[var(--color-text)]">{org.name}</p>
+                                            <p className="font-bold text-[var(--color-text)] tracking-tight">{org.name}</p>
                                         </div>
                                     </Td>
-                                    <Td>{org.userCount}</Td>
-                                    <Td>{org.ticketCount}</Td>
-                                    <Td className="hidden sm:table-cell text-soft">{new Date(org.createdAt).toLocaleDateString()}</Td>
+                                    <Td className="text-center font-bold text-[var(--color-text)]">{org.userCount}</Td>
+                                    <Td className="text-center font-bold text-[var(--color-text)]">{org.ticketCount}</Td>
+                                    <Td className="hidden sm:table-cell font-medium text-soft text-[13px]">
+                                        {new Date(org.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                                    </Td>
                                     <Td>
-                                        <div className="flex justify-end gap-2">
-                                            <button 
-                                                onClick={() => handleDelete(org.id, org.name)} 
-                                                className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-danger-text)]"
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => handleDelete(org.id, org.name)}
+                                                className="focus-ring rounded-full border border-[var(--color-danger-border,#fca5a5)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[var(--color-danger-text)] hover:bg-[var(--color-danger-bg)] transition-colors"
                                             >
                                                 Delete
                                             </button>
@@ -115,8 +111,10 @@ const OrganizationsPage = () => {
                             ))}
                         </tbody>
                     </TableElement>
-                    <div className="border-t border-[var(--color-border)] px-4 py-3 text-xs text-soft">
-                        {organizations.length} organization{organizations.length !== 1 ? "s" : ""} total
+                    <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3">
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-soft">
+                            {organizations.length} organization{organizations.length !== 1 ? "s" : ""} total
+                        </p>
                     </div>
                 </Table>
             )}

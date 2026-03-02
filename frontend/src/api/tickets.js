@@ -34,3 +34,10 @@ export const deleteTicket = (id) =>
 
 export const getActivityLog = (id) =>
     client.get(`/tickets/${id}/activity`);
+
+// NEW
+export const updateTicket = (id, data) =>
+    client.patch(`/tickets/${id}/edit`, data);
+
+export const deleteAttachment = (ticketId, attachmentId) =>
+    client.delete(`/tickets/${ticketId}/attachments/${attachmentId}`);

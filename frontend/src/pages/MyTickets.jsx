@@ -52,8 +52,8 @@ const MyTickets = () => {
     const handleDelete = async (id) => {
         toast(
             (t) => (
-                <div className="flex items-center gap-2">
-                    <span className="text-sm">Delete this ticket?</span>
+                <div className="flex items-center gap-3 p-1">
+                    <span className="text-[13px] font-bold uppercase tracking-wide">Delete Ticket?</span>
                     <button
                         onClick={async () => {
                             toast.dismiss(t.id);
@@ -65,10 +65,11 @@ const MyTickets = () => {
                                 toast.error(err?.response?.data?.message || "Delete failed.");
                             }
                         }}
-                        className="rounded border border-[var(--color-danger-border)] px-2 py-1 text-xs font-semibold text-[var(--color-danger-text)]"
+                        className="rounded bg-[var(--color-danger-bg)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-danger-text)] hover:opacity-80 transition-opacity"
                     >
                         Confirm
                     </button>
+                    <button onClick={() => toast.dismiss(t.id)} className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-text-soft)] hover:text-[var(--color-text)]">Cancel</button>
                 </div>
             ),
             { duration: 5000 }
@@ -86,41 +87,46 @@ const MyTickets = () => {
     return (
         <PageShell
             title="My Tickets"
-            subtitle="Track and manage your submitted support requests."
-            actions={<Button onClick={() => setShowModal(true)}>New Ticket</Button>}
+            subtitle="Track and manage your submitted support requests"
+            className="max-w-[1400px]"
+            actions={<Button size="lg" onClick={() => setShowModal(true)}>New Ticket</Button>}
         >
-            <div className="flex flex-wrap gap-3">
-                <Select name="status" value={filters.status} onChange={(e) => { setFilters((prev) => ({ ...prev, status: e.target.value })); setPage(1); }} className="w-48" aria-label="Filter by status">
-                    <option value="">All Statuses</option>
-                    {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
-                </Select>
-                <Select name="priority" value={filters.priority} onChange={(e) => { setFilters((prev) => ({ ...prev, priority: e.target.value })); setPage(1); }} className="w-48" aria-label="Filter by priority">
-                    <option value="">All Priorities</option>
-                    {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
-                </Select>
-                {(filters.status || filters.priority) ? <Button variant="ghost" onClick={() => { setFilters({ status: "", priority: "" }); setPage(1); }}>Clear</Button> : null}
+            <div className="flex flex-wrap items-center gap-4 mb-2">
+                <div className="w-56">
+                    <Select name="status" value={filters.status} onChange={(e) => { setFilters((prev) => ({ ...prev, status: e.target.value })); setPage(1); }} aria-label="Filter by status">
+                        <option value="">All Statuses</option>
+                        {STATUSES.map((status) => <option key={status} value={status}>{status.replace("_", " ")}</option>)}
+                    </Select>
+                </div>
+                <div className="w-56">
+                    <Select name="priority" value={filters.priority} onChange={(e) => { setFilters((prev) => ({ ...prev, priority: e.target.value })); setPage(1); }} aria-label="Filter by priority">
+                        <option value="">All Priorities</option>
+                        {PRIORITIES.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+                    </Select>
+                </div>
+                {(filters.status || filters.priority) ? <Button variant="ghost" className="mt-1" onClick={() => { setFilters({ status: "", priority: "" }); setPage(1); }}>Clear Filters</Button> : null}
             </div>
 
             {error ? <Alert tone="danger">{error}</Alert> : null}
 
             {loading ? (
-                <LoadingRows rows={4} />
+                <div className="mt-8"><LoadingRows rows={4} /></div>
             ) : filtered.length === 0 ? (
                 <EmptyState
-                    title={tickets.length === 0 ? "No tickets yet" : "No tickets match filters"}
-                    description={tickets.length === 0 ? "Create your first ticket to start tracking requests." : "Try removing one or more filters."}
-                    action={tickets.length === 0 ? <Button onClick={() => setShowModal(true)}>Create Ticket</Button> : null}
+                    title={tickets.length === 0 ? "No tickets yet" : "No tickets match your filters"}
+                    description={tickets.length === 0 ? "Create your first ticket to start tracking requests right here." : "Try adjusting or clearing your filters to see more results."}
+                    action={tickets.length === 0 ? <Button onClick={() => setShowModal(true)}>Create Ticket</Button> : <Button variant="secondary" onClick={() => { setFilters({ status: "", priority: "" }); setPage(1); }}>Clear Filters</Button>}
                 />
             ) : (
                 <Table>
                     <TableElement>
                         <TableHead>
                             <tr>
-                                <Th>Title</Th>
+                                <Th>Reference / Title</Th>
                                 <Th className="hidden sm:table-cell">Priority</Th>
                                 <Th className="hidden md:table-cell">Status</Th>
                                 <Th className="hidden lg:table-cell">SLA</Th>
-                                <Th className="hidden lg:table-cell">Created</Th>
+                                <Th className="hidden lg:table-cell text-right">Created</Th>
                                 <Th className="text-right">Actions</Th>
                             </tr>
                         </TableHead>
@@ -129,17 +135,20 @@ const MyTickets = () => {
                                 const slaState = getSlaState(ticket);
                                 return (
                                     <TableRow key={ticket.id}>
-                                        <Td className="font-medium">{ticket.title}</Td>
+                                        <Td>
+                                            <p className="font-bold text-[var(--color-text)] mb-0.5">{ticket.title}</p>
+                                            <p className="text-[11px] uppercase tracking-wider text-[var(--color-primary-600)] font-bold">TKT-{ticket.id}</p>
+                                        </Td>
                                         <Td className="hidden sm:table-cell"><Badge label={ticket.priority} tone={toneForPriority(ticket.priority)} /></Td>
                                         <Td className="hidden md:table-cell"><Badge label={ticket.status.replace("_", " ")} tone={toneForStatus(ticket.status)} /></Td>
                                         <Td className="hidden lg:table-cell">
-                                            {slaState ? <Badge label={slaState.label} tone={slaState.tone} size="sm" /> : <span className="text-xs text-soft">N/A</span>}
+                                            {slaState ? <Badge label={slaState.label} tone={slaState.tone} size="sm" /> : <span className="text-xs font-medium text-[var(--color-text-soft)]">N/A</span>}
                                         </Td>
-                                        <Td className="hidden lg:table-cell text-soft">{new Date(ticket.createdAt).toLocaleDateString()}</Td>
+                                        <Td className="hidden lg:table-cell text-[var(--color-text-soft)] font-medium text-right text-sm">{new Date(ticket.createdAt).toLocaleDateString()}</Td>
                                         <Td>
-                                            <div className="flex justify-end gap-2">
-                                                <Link to={`/tickets/${ticket.id}`} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary-700)]">View</Link>
-                                                <button onClick={() => handleDelete(ticket.id)} className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] px-2.5 py-1 text-xs font-semibold text-[var(--color-danger-text)]">Delete</button>
+                                            <div className="flex justify-end gap-3">
+                                                <Link to={`/tickets/${ticket.id}`} className="focus-ring rounded-[var(--radius-sm)] bg-[var(--color-bg-soft)] px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] transition-colors">Open</Link>
+                                                <button onClick={() => handleDelete(ticket.id)} className="focus-ring rounded-[var(--radius-sm)] border border-transparent px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase text-[var(--color-danger-text)] hover:bg-[var(--color-danger-bg)] hover:text-[#9e1c2c] transition-all">Del</button>
                                             </div>
                                         </Td>
                                     </TableRow>
@@ -148,9 +157,9 @@ const MyTickets = () => {
                         </tbody>
                     </TableElement>
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between border-t border-[var(--color-border)] px-4 py-3">
-                            <p className="text-xs text-soft">Page {page} of {totalPages}</p>
-                            <div className="flex gap-2">
+                        <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-6 py-4">
+                            <p className="text-[13px] font-medium text-[var(--color-text-soft)]">Page <span className="font-bold text-[var(--color-text)]">{page}</span> of {totalPages}</p>
+                            <div className="flex gap-3">
                                 <Button size="sm" variant="secondary" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
                                 <Button size="sm" variant="secondary" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
                             </div>

@@ -52,19 +52,19 @@ const UsersPage = () => {
     };
 
     return (
-        <PageShell 
-            title="Team Directory" 
+        <PageShell
+            title="Team Directory"
             subtitle="Manage your organization's users and agents."
             actions={
-                me?.role === "ADMIN" || me?.role === "SUPER_ADMIN" ? (
+                (me?.role === "ADMIN" || me?.role === "SUPER_ADMIN") ? (
                     <Button onClick={() => setIsCreateModalOpen(true)}>
-                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                         Add Member
                     </Button>
                 ) : null
             }
         >
-            {error ? <Alert tone="danger">{error}</Alert> : null}
+            {error && <Alert tone="danger">{error}</Alert>}
 
             {loading ? (
                 <LoadingRows rows={5} />
@@ -73,7 +73,7 @@ const UsersPage = () => {
                     <TableElement>
                         <TableHead>
                             <tr>
-                                <Th>Name</Th>
+                                <Th>Member</Th>
                                 {me?.role === "SUPER_ADMIN" && <Th className="hidden sm:table-cell">Organization</Th>}
                                 <Th className="hidden sm:table-cell">Email</Th>
                                 <Th className="hidden md:table-cell">Joined</Th>
@@ -87,12 +87,14 @@ const UsersPage = () => {
                                     <TableRow key={user.id}>
                                         <Td>
                                             <div className="flex items-center gap-3">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary-100)] text-xs font-semibold text-[var(--color-primary-700)]">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-100)] text-sm font-extrabold text-[var(--color-primary-700)] shadow-sm">
                                                     {user.name?.charAt(0)?.toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium text-[var(--color-text)]">{user.name}</p>
-                                                    {isMe ? <p className="text-xs text-soft">You</p> : null}
+                                                    <p className="font-bold text-[var(--color-text)] tracking-tight">{user.name}</p>
+                                                    {isMe && (
+                                                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--color-primary-500)]">You</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Td>
@@ -101,8 +103,10 @@ const UsersPage = () => {
                                                 <Badge label={user.organization?.name || "None"} tone="neutral" />
                                             </Td>
                                         )}
-                                        <Td className="hidden sm:table-cell text-soft">{user.email}</Td>
-                                        <Td className="hidden md:table-cell text-soft">{new Date(user.createdAt).toLocaleDateString()}</Td>
+                                        <Td className="hidden sm:table-cell font-medium text-soft text-[13px]">{user.email}</Td>
+                                        <Td className="hidden md:table-cell font-medium text-soft text-[13px]">
+                                            {new Date(user.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                                        </Td>
                                         <Td>
                                             {isMe ? (
                                                 <Badge label={user.role} tone={roleTone(user.role)} />
@@ -111,7 +115,7 @@ const UsersPage = () => {
                                                     value={user.role}
                                                     disabled={updating === user.id}
                                                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                                                    className="focus-ring rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-text)] disabled:opacity-60"
+                                                    className="focus-ring rounded-full border border-[var(--color-border)] bg-[var(--color-bg-soft)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[var(--color-text)] outline-none transition-colors hover:bg-[var(--color-border)] disabled:opacity-50"
                                                 >
                                                     {ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
                                                 </select>
@@ -122,14 +126,18 @@ const UsersPage = () => {
                             })}
                         </tbody>
                     </TableElement>
-                    <div className="border-t border-[var(--color-border)] px-4 py-3 text-xs text-soft">{users.length} user{users.length !== 1 ? "s" : ""} total</div>
+                    <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-3">
+                        <p className="text-[11px] font-extrabold uppercase tracking-widest text-soft">
+                            {users.length} member{users.length !== 1 ? "s" : ""} total
+                        </p>
+                    </div>
                 </Table>
             )}
 
-            <CreateUserModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                onUserCreated={handleUserCreated} 
+            <CreateUserModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onUserCreated={handleUserCreated}
             />
         </PageShell>
     );

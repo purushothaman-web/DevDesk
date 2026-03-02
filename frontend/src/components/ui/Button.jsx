@@ -1,14 +1,14 @@
 const variants = {
-    primary: "bg-[var(--color-primary-500)] text-white border border-[var(--color-primary-500)] hover:bg-[var(--color-primary-600)] hover:border-[var(--color-primary-600)]",
-    secondary: "bg-[var(--color-surface-muted)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-primary-50)]",
-    ghost: "bg-transparent text-[var(--color-text-soft)] border border-transparent hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]",
-    danger: "bg-[var(--color-danger-text)] text-white border border-[var(--color-danger-text)] hover:opacity-90",
+    primary: "bg-[var(--color-primary-500)] text-white shadow-sm hover:shadow-md hover:bg-[var(--color-primary-600)] hover:-translate-y-[1px]",
+    secondary: "bg-[var(--color-surface)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm hover:border-[var(--color-border-strong)] hover:shadow-md hover:-translate-y-[1px]",
+    ghost: "bg-transparent text-[var(--color-text-soft)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text)]",
+    danger: "bg-[var(--color-danger-bg)] text-[var(--color-danger-text)] hover:bg-[#ffe0e4] hover:text-[#9e1c2c]",
 };
 
 const sizes = {
-    sm: "h-9 px-3 text-sm rounded-[var(--radius-sm)]",
-    md: "h-10 px-4 text-sm rounded-[var(--radius-sm)]",
-    lg: "h-11 px-5 text-sm rounded-[var(--radius-md)]",
+    sm: "h-9 px-4 text-[13px] rounded-[var(--radius-sm)]",
+    md: "h-11 px-5 text-sm rounded-[var(--radius-md)]",
+    lg: "h-12 px-6 text-base rounded-[var(--radius-md)]",
 };
 
 const Spinner = () => (
@@ -34,8 +34,8 @@ const Button = ({
         type={type}
         disabled={disabled || loading}
         className={[
-            "focus-ring inline-flex items-center justify-center gap-2 font-semibold transition duration-[var(--duration-fast)]",
-            "disabled:cursor-not-allowed disabled:opacity-60",
+            "focus-ring inline-flex items-center justify-center gap-2.5 font-semibold transition-all duration-[var(--duration-base)]",
+            "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:transform-none disabled:hover:shadow-none",
             variants[variant],
             sizes[size],
             fullWidth ? "w-full" : "",

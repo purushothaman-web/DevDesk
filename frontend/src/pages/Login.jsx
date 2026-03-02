@@ -35,22 +35,24 @@ const Login = () => {
         <AuthShell
             title="Welcome Back"
             subtitle="Sign in to continue to DevDesk."
-            icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+            icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>}
             footer={
                 <>
                     Don&apos;t have an account?{" "}
-                    <Link to="/register" className="focus-ring rounded text-[var(--color-primary-700)]">Create one</Link>
+                    <Link to="/register" className="focus-ring rounded text-[var(--color-primary-700)] font-bold hover:underline underline-offset-4">Create one</Link>
                 </>
             }
         >
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
                 {error ? <Alert tone="danger">{error}</Alert> : null}
                 <Input label="Email" type="email" name="email" value={form.email} onChange={handleChange} placeholder="you@example.com" required />
                 <Input label="Password" type="password" name="password" value={form.password} onChange={handleChange} placeholder="********" required />
-                <div className="flex justify-end">
-                    <Link className="focus-ring rounded text-sm text-[var(--color-primary-700)]" to="/forgot-password">Forgot password?</Link>
+                <div className="flex justify-start">
+                    <Link className="focus-ring rounded text-[12px] font-bold uppercase tracking-wide text-[var(--color-primary-700)] hover:text-[var(--color-primary-800)]" to="/forgot-password">Forgot password?</Link>
                 </div>
-                <Button type="submit" fullWidth loading={loading}>Sign In</Button>
+                <div className="pt-2">
+                    <Button type="submit" className="w-full" size="lg" loading={loading}>Sign In</Button>
+                </div>
             </form>
         </AuthShell>
     );

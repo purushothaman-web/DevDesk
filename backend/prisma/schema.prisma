@@ -70,6 +70,8 @@ model Ticket {
   description String
   status      Status @default(OPEN)
   priority    Priority @default(MEDIUM)
+  tags        String[]
+  category    String?
 
   userId      String
   user        User     @relation(fields: [userId], references: [id])

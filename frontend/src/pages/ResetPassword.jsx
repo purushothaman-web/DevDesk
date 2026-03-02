@@ -37,10 +37,14 @@ const ResetPassword = () => {
             <AuthShell
                 title="Invalid Link"
                 subtitle="This reset link is invalid or missing a token."
-                icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14L12 5 5 19z" /></svg>}
-                footer={<Link to="/login" className="focus-ring rounded text-[var(--color-primary-700)]">Return to Login</Link>}
+                icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M5 19h14L12 5 5 19z" /></svg>}
+                footer={<Link to="/login" className="focus-ring rounded font-bold text-[var(--color-primary-700)] hover:underline underline-offset-4">Return to Login</Link>}
             >
-                <Alert tone="warning">Request a new password reset link and try again.</Alert>
+                <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--color-warning-border,#fcd34d)] bg-[var(--color-warning-bg,#fffbeb)] p-5 text-center">
+                    <p className="text-[14px] font-semibold text-[var(--color-text-soft)]">
+                        Request a new password reset link and try again.
+                    </p>
+                </div>
             </AuthShell>
         );
     }
@@ -48,13 +52,33 @@ const ResetPassword = () => {
     return (
         <AuthShell
             title="Create New Password"
-            subtitle="Set a strong password for your account."
-            icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6-6V9a6 6 0 10-12 0v2M5 11h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" /></svg>}
+            subtitle="Set a strong, unique password for your account."
+            icon={<svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m6-6V9a6 6 0 10-12 0v2M5 11h14a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" /></svg>}
         >
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <Input label="New Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
-                <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
-                <Button type="submit" fullWidth loading={loading}>Set New Password</Button>
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
+                    label="New Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    minLength={6}
+                    required
+                />
+                <Input
+                    label="Confirm New Password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your new password"
+                    minLength={6}
+                    required
+                />
+                <div className="pt-2">
+                    <Button type="submit" className="w-full" size="lg" loading={loading}>
+                        Set New Password
+                    </Button>
+                </div>
             </form>
         </AuthShell>
     );

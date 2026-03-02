@@ -38,19 +38,34 @@ const Profile = () => {
     };
 
     return (
-        <PageShell title="My Profile" subtitle="Manage your account details." className="max-w-3xl">
-            <Card className="mx-auto max-w-xl">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <Input label="Email" type="email" value={user?.email || ""} disabled />
-                    <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} required />
-                    <div className="pt-2">
-                        <p className="mb-3 text-sm font-semibold text-[var(--color-text-soft)]">Change Password (Optional)</p>
-                        <div className="space-y-3">
+        <PageShell title="My Profile" subtitle="Manage your account details and security settings." className="max-w-4xl mx-auto">
+            <Card className="p-8 shadow-sm">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-[var(--color-border)]">
+                        <div className="md:col-span-1">
+                            <h3 className="text-[14px] font-extrabold text-[var(--color-text)] tracking-wider uppercase mb-1">Personal Info</h3>
+                            <p className="text-[13px] text-[var(--color-text-soft)] font-medium">Update your account identity.</p>
+                        </div>
+                        <div className="md:col-span-2 space-y-5">
+                            <Input label="Email Address" type="email" value={user?.email || ""} disabled className="bg-[var(--color-bg-soft)] text-[var(--color-text-muted)] border-dashed" />
+                            <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} required />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="md:col-span-1">
+                            <h3 className="text-[14px] font-extrabold text-[var(--color-text)] tracking-wider uppercase mb-1">Security</h3>
+                            <p className="text-[13px] text-[var(--color-text-soft)] font-medium">Change your password (Optional).</p>
+                        </div>
+                        <div className="md:col-span-2 space-y-5">
                             <Input label="New Password" type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Leave blank to keep current password" />
                             <Input label="Confirm New Password" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Re-enter new password" />
                         </div>
                     </div>
-                    <Button type="submit" loading={loading}>Save Changes</Button>
+
+                    <div className="flex justify-end pt-6 border-t border-[var(--color-border)]">
+                        <Button type="submit" loading={loading} className="px-8" size="lg">Save Changes</Button>
+                    </div>
                 </form>
             </Card>
         </PageShell>
