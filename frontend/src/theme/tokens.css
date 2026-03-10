@@ -1,6 +1,12 @@
 :root {
-  --font-heading: "Sora", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Manrope", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-heading: "Krona One", "Bricolage Grotesque", sans-serif;
+  --font-body: "JetBrains Mono", monospace;
+
+  /* brutalist palette (light theme) */
+  --color-brutalist-bg: #ffffff;
+  --color-brutalist-text: #000000;
+  --color-brutalist-accent: #ff4500;
+  --color-brutalist-border: #000000;
 
   --color-bg: #f4f7fb;
   --color-bg-soft: #edf3f9;
@@ -20,6 +26,16 @@
   --color-primary-500: #0688df;
   --color-primary-600: #046ebb;
   --color-primary-700: #065796;
+
+  /* additional palette for landing page enhancements */
+  --color-dark-steel: #1f2933;
+  --color-steel-soft: #4b5563;
+  --color-accent: #ffb703;
+
+  /* industrial palette */
+  --color-industrial-bg: #22272e;
+  --color-industrial-text: #e1e8f0;
+  --color-industrial-accent: #707b8c;
 
   --color-info-bg: #e8f4ff;
   --color-info-text: #0b5ea8;

@@ -5,6 +5,7 @@ The frontend application for **DevDesk**, a modern help desk ticketing system. B
 ## Features
 
 - **Authentication**: Login, Registration, Password Reset, Profile Management.
+- **Public Landing Page**: Marketing homepage at `/` with clear login/register/app-entry CTAs.
 - **Dashboard**: Interactive charts and statistics for Admins and Agents.
 - **Ticket Management**: Create, view, update, delete tickets.
 - **Search**: Full-text search for tickets.
@@ -50,9 +51,11 @@ Create a `.env` file in the `frontend` directory:
 
 ```bash
 VITE_BASE_URL="http://localhost:5000"
+VITE_SITE_URL="https://your-production-domain.com"
 ```
 
 > Ensure this points to your running backend API.
+> `VITE_SITE_URL` is required for production builds because `sitemap.xml` and `robots.txt` are generated during `npm run build`.
 
 ### 4. Run the development server
 
@@ -65,9 +68,16 @@ The app will be available at `http://localhost:5173`.
 ## Scripts
 
 - `npm run dev`: Start development server.
+- `npm run prebuild`: Generate `public/sitemap.xml` and `public/robots.txt` from `VITE_SITE_URL`.
 - `npm run build`: Build for production.
 - `npm run preview`: Preview production build locally.
 - `npm run lint`: Run ESLint.
+
+## Deploy Notes
+
+- `npm run build` automatically runs the sitemap generator first via `prebuild`.
+- Build will fail if `VITE_SITE_URL` is missing or invalid to prevent incorrect canonical sitemap links.
+- Generated sitemap includes public pages, including the landing route `/`.
 
 ## Project Structure
 

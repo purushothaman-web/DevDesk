@@ -1,8 +1,14 @@
-const Card = ({ children, className = "", elevated = false, interactive = false }) => (
+const Card = ({ children, className = "", elevated = false, interactive = false, minimal = false }) => (
     <section
         className={[
-            "bg-[var(--color-surface)] rounded-[var(--radius-xl)] p-6 transition-all duration-[var(--duration-base)]",
-            elevated ? "shadow-[var(--shadow-md)] shadow-[var(--shadow-sm)] border border-[var(--color-border)]" : "border shadow-sm border-[var(--color-border)]",
+            minimal
+                ? "bg-transparent p-4"
+                : "bg-[var(--color-surface)] rounded-[var(--radius-xl)] p-6 transition-all duration-[var(--duration-base)]",
+            minimal
+                ? ""
+                : elevated
+                ? "shadow-[var(--shadow-md)] shadow-[var(--shadow-sm)] border border-[var(--color-border)]"
+                : "border shadow-sm border-[var(--color-border)]",
             interactive ? "hover:-translate-y-1 hover:shadow-[var(--shadow-md)] hover:border-[var(--color-border-strong)] cursor-pointer" : "",
             className,
         ].join(" ")}

@@ -11,10 +11,10 @@ import Profile from "./pages/Profile";
 import UsersPage from "./pages/UsersPage";
 import OrganizationsPage from "./pages/OrganizationsPage";
 import SlaSettings from "./pages/SlaSettings";
+import Landing from "./pages/Landing";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
-// Redirects to /tickets for Users and /dashboard for elevated roles if they visit a page they aren't allowed
 const RoleRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
   if (user && !allowedRoles.includes(user.role)) {
@@ -24,24 +24,31 @@ const RoleRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-// Smart catch-all redirect based on user role
 const CatchAll = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   return <Navigate to={user.role === "USER" ? "/tickets" : "/dashboard"} replace />;
 };
 
+const Home = () => {
+  const { user, authReady } = useAuth();
+  if (!authReady) return null;
+  if (user) {
+    return <Navigate to={user.role === "USER" ? "/tickets" : "/dashboard"} replace />;
+  }
+  return <Landing />;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <RoleRoute allowedRoles={["ADMIN", "AGENT", "SUPER_ADMIN"]}>
@@ -81,7 +88,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Catch-all: send USERs to tickets, elevated roles to dashboard */}
         <Route path="*" element={<CatchAll />} />
       </Routes>
     </BrowserRouter>
