@@ -141,7 +141,7 @@ const AdminDashboard = ({ stats, workload, trendData, priorityData, user }) => (
                     </div>
                 </div>
                 <div className="h-[220px] w-full -ml-4 -mb-4 mt-auto">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <AreaChart data={trendData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1">
@@ -162,7 +162,7 @@ const AdminDashboard = ({ stats, workload, trendData, priorityData, user }) => (
                 {priorityData.length > 0 ? (
                     <div className="flex-1 flex flex-col justify-center items-center relative">
                         <div className="h-[200px] w-full mt-2">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                 <PieChart>
                                     <Pie data={priorityData} innerRadius={65} outerRadius={85} paddingAngle={5} dataKey="value" stroke="none" animationDuration={1000}>
                                         {priorityData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
